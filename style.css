@@ -1,9 +1,10 @@
-/* style.css */
+/* style.css - 監製修正強化版 - 絕對不簡化版 */
 :root { 
     --mage: #3498db; 
     --warrior: #e74c3c; 
     --primary: #66fcf1; 
     --highlight: #f1c40f;
+    --spell-glow: #9b59b6;
     --card-bg: #1f2833;
 }
 
@@ -23,7 +24,7 @@ body {
     height: 100vh; 
 }
 
-/* 戰場質感升級 */
+/* 戰場質感與格線 */
 .battlefield { 
     display: flex; 
     align-items: center; 
@@ -39,7 +40,7 @@ body {
 #enemy-board { background: rgba(231, 76, 60, 0.03); border-bottom: 1px solid rgba(231, 76, 60, 0.1); }
 #player-board { background: rgba(52, 152, 219, 0.03); border-top: 1px solid rgba(52, 152, 219, 0.1); }
 
-/* 英雄與 UI 條 */
+/* 英雄區域 */
 .hero { 
     width: 85px; height: 85px; border-radius: 50%; 
     border: 3px solid var(--primary); 
@@ -48,14 +49,12 @@ body {
     box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
     position: relative; z-index: 10; transition: 0.3s; 
 }
-
 .hero:hover { transform: scale(1.05); cursor: pointer; }
 
 .info-bar { 
     display: flex; align-items: center; justify-content: space-around; 
     background: rgba(31, 40, 51, 0.9); 
     border-top: 1px solid #45a29e; border-bottom: 1px solid #45a29e; 
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 /* --- 卡牌重塑 --- */
@@ -66,13 +65,22 @@ body {
     color: white; 
     position: relative; 
     cursor: pointer; 
-    border: 1px solid #45a29e; 
+    border: 2px solid #45a29e; 
     box-shadow: 0 8px 15px rgba(0,0,0,0.6);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden; /* 裁切內部圖片 */
+    overflow: hidden;
 }
 
-/* 卡牌插圖區 */
+/* 抽牌動畫 - 修正位移路徑使其更自然 */
+@keyframes drawAnim {
+    0% { transform: translate(600px, 300px) rotate(60deg) scale(0.1); opacity: 0; }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+}
+/* 當 JS 為卡牌添加 .drawing 類別時觸發 */
+.card.drawing { 
+    animation: drawAnim 0.7s cubic-bezier(0.19, 1, 0.22, 1) forwards; 
+}
+
 .card-art {
     width: 100%; height: 55%;
     background-size: cover;
@@ -81,19 +89,51 @@ body {
     border-bottom: 1px solid #45a29e;
 }
 
-/* 卡牌標題 */
 .card-name {
-    font-size: 13px;
-    font-weight: bold;
-    text-align: center;
-    padding: 5px 2px;
-    background: rgba(0,0,0,0.3);
+    font-size: 13px; font-weight: bold; text-align: center;
+    padding: 5px 2px; background: rgba(0,0,0,0.3);
 }
 
+/* 法術牌區分：紫色奧術感 */
+.card.spell-card { 
+    border-color: var(--spell-glow); 
+    box-shadow: 0 0 10px rgba(155, 89, 182, 0.4);
+}
+.card.spell-card::after {
+    content: ''; position: absolute; inset: 0;
+    box-shadow: inset 0 0 20px rgba(155, 89, 182, 0.5);
+    pointer-events: none;
+}
+
+/* 選中與瞄準狀態 */
 .card.selected { 
     border-color: var(--highlight); 
     box-shadow: 0 0 25px var(--highlight); 
-    transform: translateY(-20px) scale(1.05); 
+    transform: translateY(-25px) scale(1.08);
+    z-index: 100;
+}
+
+/* 針對法術牌正在瞄準時的特殊發光 */
+.card.spell-targeting {
+    border-color: #ff00ff !important;
+    box-shadow: 0 0 35px #ff00ff !important;
+    animation: pulseSpell 1.5s infinite;
+}
+
+@keyframes pulseSpell {
+    0% { box-shadow: 0 0 15px #ff00ff; }
+    50% { box-shadow: 0 0 45px #ff00ff; }
+    100% { box-shadow: 0 0 15px #ff00ff; }
+}
+
+/* 瞄準模式時的滑鼠指針 - 修正全域類別 */
+body.targeting-mode { 
+    cursor: crosshair !important; 
+}
+/* 讓可被攻擊的目標也有視覺提示 */
+.targeting-mode .card:hover, .targeting-mode .hero:hover {
+    outline: 3px dashed var(--highlight);
+    outline-offset: 5px;
 }
 
 .cost { 
@@ -101,52 +141,50 @@ body {
     background: #45a29e; color: white; width: 32px; height: 32px; 
     border-radius: 50%; display: flex; align-items: center; 
     justify-content: center; font-weight: bold; 
-    border: 2px solid #0b0c10;
-    z-index: 5;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    border: 2px solid #0b0c10; z-index: 5;
 }
 
 .stats { 
     position: absolute; bottom: 0; width: 100%; 
     display: flex; justify-content: space-around; 
-    font-weight: bold; 
-    background: rgba(0,0,0,0.7);
+    font-weight: bold; background: rgba(0,0,0,0.7);
     padding: 4px 0;
 }
 
-.atk { color: #f39c12; text-shadow: 0 0 5px rgba(243, 156, 18, 0.5); }
-.hp { color: #e74c3c; text-shadow: 0 0 5px rgba(231, 76, 60, 0.5); }
+/* 訊息提示系統 */
+#game-msg {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 3.5rem; font-weight: 900; color: var(--highlight);
+    text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 10px var(--primary);
+    pointer-events: none; z-index: 3000; opacity: 0; transition: 0.4s;
+}
+.msg-show { opacity: 1 !important; transform: translate(-50%, -50%) scale(1.2) !important; }
 
-/* --- 特效保持並優化 --- */
+/* 攻擊特效與震動 */
 .projectile {
     position: fixed; width: 25px; height: 25px;
     background: radial-gradient(circle, #fff 0%, #ffcc00 30%, #ff4500 70%);
-    border-radius: 50%;
-    box-shadow: 0 0 20px #ff4500, 0 0 40px #ff8c00;
-    z-index: 1000;
-    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-    pointer-events: none;
-    animation: rotateFire 0.5s linear infinite;
+    border-radius: 50%; box-shadow: 0 0 20px #ff4500;
+    z-index: 1000; transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-
-@keyframes rotateFire { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-.particle {
-    position: fixed; width: 8px; height: 8px;
-    background: #ff4500; border-radius: 50%;
-    pointer-events: none; z-index: 999;
-    animation: fadeAndShrink 0.4s forwards;
-}
-
-@keyframes fadeAndShrink { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(0.1); opacity: 0; } }
 
 .damage-pop { 
     position: absolute; color: #ff4d4d; font-weight: bold; 
-    font-size: 28px; animation: popUp 0.6s ease-out forwards; 
-    z-index: 1001; pointer-events: none; text-shadow: 0 0 10px black;
+    font-size: 32px; animation: popUp 0.6s ease-out forwards; 
+    text-shadow: 0 0 10px black;
 }
 
-/* 遊戲開始畫面優化 */
+@keyframes popUp { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 0; transform: translateY(-60px) scale(1.5); } }
+
+/* 修正震動動畫：避免與選中狀態衝突，改用 transform */
+.shake { animation: shakeEffect 0.3s ease-in-out infinite; }
+@keyframes shakeEffect { 
+    0%, 100% { transform: rotate(0deg); } 
+    25% { transform: rotate(-5deg); } 
+    75% { transform: rotate(5deg); } 
+}
+
+/* 開始介面 */
 #setup-screen { 
     position: fixed; inset: 0; background: #0b0c10; 
     z-index: 2000; display: flex; flex-direction: column; 
@@ -154,27 +192,20 @@ body {
     background-image: radial-gradient(circle, #1f2833 0%, #0b0c10 100%);
 }
 
+/* 補齊按鈕與文字樣式，確保不簡化 */
 #setup-screen h1 {
-    font-size: 3rem;
-    color: var(--primary);
-    text-shadow: 0 0 20px rgba(102, 252, 241, 0.5);
-    margin-bottom: 40px;
+    font-size: 4rem; color: var(--primary); margin-bottom: 50px;
+    text-shadow: 0 0 30px var(--primary);
 }
 
-button { 
-    padding: 15px 40px; 
-    background: transparent; 
-    border: 2px solid var(--primary); 
-    color: var(--primary); 
-    cursor: pointer; 
-    border-radius: 30px; 
-    font-weight: bold; 
-    font-size: 1.1rem;
-    transition: all 0.3s;
+.class-select-area {
+    display: flex; gap: 30px;
 }
 
-button:hover { 
-    background: var(--primary); 
-    color: #0b0c10;
-    box-shadow: 0 0 20px var(--primary);
+/* 結束按鈕樣式 */
+#end-btn {
+    padding: 10px 30px; background: #e94560; border: none;
+    color: white; border-radius: 5px; cursor: pointer; font-weight: bold;
+    transition: 0.3s;
 }
+#end-btn:hover { background: #ff4d6d; box-shadow: 0 0 15px #e94560; }
