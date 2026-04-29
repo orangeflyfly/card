@@ -1,14 +1,14 @@
 // database.js - 萬界裂痕 (The Omni Rift) 卡牌資料庫
 // 融合東方水墨奇幻與現代戲劇性風格
 
-// 職業定義
-const CLASSES = {
+// 職業定義 (加上 export 匯出)
+export const CLASSES = {
     MAGE: { name: "奧法師", heroPower: "奧術衝擊", powerCost: 2 },
     WARRIOR: { name: "破陣者", heroPower: "武裝整修", powerCost: 2 }
 };
 
-// 卡牌庫
-const CARD_DB = {
+// 卡牌庫 (加上 export 匯出)
+export const CARD_DB = {
     MAGE: [
         { id: 'm1', name: "見習法師", cost: 1, atk: 1, hp: 2, type: 'minion', art: "https://picsum.photos/id/1062/120/90" },
         { id: 'm2', name: "奧術彈", cost: 1, atk: 3, hp: 0, type: "spell", art: "https://picsum.photos/id/102/120/90" }, 
