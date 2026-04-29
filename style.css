@@ -1,22 +1,24 @@
-/* style.css - 啟源版本視覺大修版 */
+/* style.css - 萬界裂痕：水墨奇幻大修版 */
 
 :root { 
-    --mage: #3498db; 
-    --warrior: #e74c3c; 
-    --primary: #66fcf1; 
-    --highlight: #f1c40f;
-    --spell-glow: #9b59b6;
-    --card-bg: #1f2833;
-    --gold: #c5a059;
+    --mage: #2c3e50; 
+    --warrior: #8b0000; /* 硃砂紅 */
+    --primary: #d4c3b3; /* 宣紙白/古風白 */
+    --highlight: #e74c3c; 
+    --spell-glow: #8e44ad;
+    --card-bg: #1a1a1a; /* 墨黑 */
+    --gold: #bda06d; /* 青銅金 */
+    --ink-shadow: rgba(0, 0, 0, 0.85);
 }
 
 body { 
-    background: #0b0c10; 
-    color: #c5c6c7; 
-    font-family: 'Segoe UI', Roboto, 'Microsoft JhengHei', sans-serif; 
+    /* 背景改為深色宣紙/墨暈質感 */
+    background: #0f0f0f; 
+    color: #d4c3b3; 
+    font-family: 'Noto Serif TC', 'PMingLiU', 'Microsoft JhengHei', serif; /* 襯線字體增添古典感 */
     margin: 0; 
     overflow: hidden; 
-    background: radial-gradient(circle at center, #1b262c 0%, #0b0c10 100%);
+    background: radial-gradient(circle at center, #2a2a2a 0%, #050505 100%);
 }
 
 /* =========================================
@@ -34,27 +36,29 @@ body {
     justify-content: center; 
     gap: 15px; 
     position: relative; 
-    background-image: linear-gradient(rgba(102, 252, 241, 0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(102, 252, 241, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+    /* 移除科幻網格，改為極簡的水墨暗角氛圍 */
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
 }
 
 .info-bar { 
     display: flex; align-items: center; justify-content: space-around; 
-    background: rgba(11, 12, 16, 0.95); 
+    background: rgba(15, 15, 15, 0.95); 
     border-top: 2px solid var(--gold); border-bottom: 2px solid var(--gold); 
-    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    box-shadow: 0 0 30px var(--ink-shadow);
+    font-weight: bold;
+    letter-spacing: 2px;
 }
 
 /* =========================================
-   【啟動畫面 - 深度美化】
+   【啟動畫面 - 水墨山水美化】
    ========================================= */
 #setup-screen { 
     position: fixed; inset: 0; 
     z-index: 2000; display: flex; flex-direction: column; 
     align-items: center; justify-content: center;
-    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-                url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070&auto=format&fit=crop'); /* 宇宙深邃背景 */
+    /* 雲霧繚繞的水墨群山背景 */
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
+                url('https://images.unsplash.com/photo-1541703665518-e37452d2427a?q=80&w=2000&auto=format&fit=crop'); 
     background-size: cover;
     background-position: center;
 }
@@ -62,37 +66,35 @@ body {
 #setup-screen h1 {
     font-size: 5rem; 
     color: var(--primary); 
-    letter-spacing: 15px;
-    text-transform: uppercase;
+    letter-spacing: 20px;
     margin-bottom: 10px;
-    filter: drop-shadow(0 0 20px var(--primary));
-    animation: titleFloat 3s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(212, 195, 179, 0.5), 2px 2px 5px #000;
+    animation: inkBreath 4s ease-in-out infinite;
 }
 
 #setup-screen p {
     color: var(--gold);
     font-size: 1.2rem;
-    letter-spacing: 5px;
+    letter-spacing: 8px;
     margin-bottom: 50px;
     opacity: 0.8;
 }
 
-@keyframes titleFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
+@keyframes inkBreath {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(212, 195, 179, 0.3)); }
+    50% { transform: scale(1.02); filter: drop-shadow(0 0 25px rgba(212, 195, 179, 0.6)); }
 }
 
 .class-select-area {
     display: flex; gap: 50px;
 }
 
-/* 職業選擇按鈕改為「卡片式按鈕」 */
 .class-card-btn {
     width: 220px;
     height: 320px;
-    background: rgba(31, 40, 51, 0.8);
-    border: 3px solid var(--gold);
-    border-radius: 15px;
+    background: rgba(20, 20, 20, 0.85);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
@@ -100,19 +102,28 @@ body {
     align-items: center;
     justify-content: space-around;
     padding: 20px;
-    color: white;
+    color: var(--primary);
+    box-shadow: 0 10px 30px var(--ink-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 增加按鈕的古典邊框感 */
+.class-card-btn::before {
+    content: ''; position: absolute; inset: 5px; 
+    border: 1px dashed rgba(189, 160, 109, 0.4); 
+    pointer-events: none;
 }
 
 .class-card-btn:hover {
-    transform: scale(1.1) translateY(-10px);
-    background: rgba(69, 162, 158, 0.4);
-    box-shadow: 0 0 50px var(--primary);
-    border-color: var(--primary);
+    transform: scale(1.08) translateY(-10px);
+    background: rgba(40, 20, 20, 0.9);
+    box-shadow: 0 0 40px var(--warrior);
+    border-color: var(--highlight);
 }
 
-.class-card-btn i { font-size: 3rem; margin-bottom: 10px; }
-.class-card-btn h2 { margin: 0; color: var(--primary); font-size: 1.8rem; }
-.class-card-btn p { font-size: 0.9rem; letter-spacing: 1px; color: #ccc; }
+.class-card-btn h2 { margin: 0; color: var(--gold); font-size: 2rem; letter-spacing: 5px; }
+.class-card-btn p { font-size: 0.95rem; letter-spacing: 2px; color: #aaa; text-align: center; }
 
 /* =========================================
    【遊戲內元件與卡牌】
@@ -120,16 +131,17 @@ body {
 .card { 
     width: 125px; height: 175px; 
     background: var(--card-bg); 
-    border-radius: 12px; 
-    color: white; 
+    border-radius: 6px; /* 水墨畫風不需要太圓滑的邊角 */
+    color: var(--primary); 
     position: relative; 
     cursor: pointer; 
-    border: 2px solid var(--gold); 
-    box-shadow: 0 8px 15px rgba(0,0,0,0.6);
+    border: 2px solid #444; 
+    box-shadow: 5px 10px 15px rgba(0,0,0,0.8);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden;
+    overflow: visible; /* 讓超出邊界的標籤(如嘲諷盾牌)顯示出來 */
 }
 
+/* 抽牌動畫 */
 .card.drawing { animation: drawAnim 0.7s ease-out forwards; }
 @keyframes drawAnim {
     0% { transform: translate(600px, 300px) rotate(60deg) scale(0.1); opacity: 0; }
@@ -137,26 +149,50 @@ body {
 }
 
 .card-art {
-    width: 100%; height: 55%;
+    width: 100%; height: 50%;
     background-size: cover; background-position: center;
     border-bottom: 2px solid var(--gold);
+    border-radius: 4px 4px 0 0;
+    filter: sepia(0.3) contrast(1.1); /* 稍微帶點復古色調 */
 }
 
-.card.spell-card { border-color: var(--spell-glow); box-shadow: inset 0 0 20px rgba(155, 89, 182, 0.5); }
-.card.selected { border-color: var(--highlight); box-shadow: 0 0 25px var(--highlight); transform: translateY(-25px) scale(1.08); z-index: 100; }
+.card-name {
+    font-weight: bold; text-align: center; margin-top: 5px; letter-spacing: 1px;
+    color: var(--gold);
+}
+
+.card.spell-card { border-color: #6a1b9a; }
+.card.selected { 
+    border-color: var(--highlight); 
+    box-shadow: 0 0 25px rgba(231, 76, 60, 0.8); 
+    transform: translateY(-25px) scale(1.08); 
+    z-index: 100; 
+}
+
+/* 新增：卡牌疲勞狀態 */
+.card.exhausted {
+    filter: grayscale(80%) brightness(0.6);
+    cursor: not-allowed;
+    border-color: #333;
+}
+.card.exhausted:hover { transform: none; box-shadow: 5px 10px 15px rgba(0,0,0,0.8); }
 
 .cost { 
-    position: absolute; top: -5px; left: -5px; 
-    background: var(--gold); color: black; width: 34px; height: 34px; 
+    position: absolute; top: -10px; left: -10px; 
+    background: radial-gradient(circle, #f9f9f9, #ccc); color: #000; 
+    width: 32px; height: 32px; 
     border-radius: 50%; display: flex; align-items: center; 
-    justify-content: center; font-weight: 900; 
-    border: 2px solid #000; z-index: 10;
+    justify-content: center; font-weight: 900; font-size: 1.1rem;
+    border: 2px solid var(--gold); z-index: 10;
+    box-shadow: 2px 2px 5px #000;
 }
 
 .stats { 
     position: absolute; bottom: 0; width: 100%; 
     display: flex; justify-content: space-around; 
-    font-weight: bold; background: rgba(0,0,0,0.85); padding: 6px 0;
+    font-weight: bold; background: rgba(0,0,0,0.9); padding: 6px 0;
+    border-top: 1px solid #333;
+    border-radius: 0 0 4px 4px;
 }
 
 /* =========================================
@@ -164,22 +200,43 @@ body {
    ========================================= */
 .hero { 
     width: 90px; height: 90px; border-radius: 50%; 
-    border: 4px solid var(--gold); 
-    background: radial-gradient(#1f2833, #0b0c10); 
-    box-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
+    border: 3px solid var(--gold); 
+    background: url('https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=200&auto=format&fit=crop');
+    background-size: cover; background-position: center;
+    box-shadow: 0 0 20px rgba(189, 160, 109, 0.4), inset 0 0 20px #000;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-shadow: 2px 2px 4px #000;
+    cursor: pointer;
+    transition: 0.3s;
 }
+
+.hero:hover { filter: brightness(1.2); box-shadow: 0 0 30px var(--highlight); }
 
 #game-msg {
     position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
     font-size: 4rem; font-weight: 900; color: var(--highlight);
-    text-shadow: 0 0 30px #000; pointer-events: none; z-index: 3000; opacity: 0; transition: 0.4s;
+    text-shadow: 0 0 40px #000, 2px 2px 0px var(--gold); pointer-events: none; z-index: 3000; opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    letter-spacing: 5px;
 }
-.msg-show { opacity: 1 !important; transform: translate(-50%, -50%) scale(1.1) !important; }
+.msg-show { opacity: 1 !important; transform: translate(-50%, -50%) scale(1.2) !important; }
 
 #end-btn {
-    padding: 15px 35px; background: linear-gradient(to bottom, #e94560, #a01a30);
-    border: 2px solid var(--gold); color: white; border-radius: 50px;
-    cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s;
+    padding: 12px 30px; 
+    background: linear-gradient(to bottom, #8b0000, #4a0000); /* 硃砂紅漸層 */
+    border: 2px solid var(--gold); color: var(--primary); border-radius: 4px;
+    cursor: pointer; font-weight: bold; font-size: 1.1rem; letter-spacing: 2px;
+    transition: 0.3s;
+    font-family: inherit;
 }
-#end-btn:hover { transform: scale(1.1); box-shadow: 0 0 20px #e94560; }
+#end-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(139, 0, 0, 0.8); background: #a00000; }
+
+/* 法術/攻擊投射物與傷害數字 */
+.projectile { position: fixed; width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle, #fff, #e74c3c); box-shadow: 0 0 20px #e74c3c; z-index: 2500; transition: all 0.5s linear; pointer-events: none; }
+.particle { position: fixed; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; pointer-events: none; z-index: 2499; animation: fadeOut 0.4s forwards; }
+@keyframes fadeOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.1); } }
+
+.shake { animation: shakeAnim 0.2s infinite; }
+@keyframes shakeAnim { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+
+.damage-pop { position: fixed; font-size: 3rem; font-weight: bold; color: white; text-shadow: 0 0 10px red; pointer-events: none; z-index: 3000; animation: popAnim 0.6s ease-out forwards; }
+@keyframes popAnim { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 50% { transform: translateY(-40px) scale(1.5); } 100% { transform: translateY(-60px) scale(1); opacity: 0; } }
