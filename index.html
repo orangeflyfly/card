@@ -2,106 +2,237 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>萬界裂痕 - 模組化開發版</title>
+    <title>萬界裂痕：啟源 - 核心開發版</title>
     <style>
-        /* 這裡保留之前的 CSS 並優化，為節省空間略過重複部分，重點在 JS 結構 */
-        :root { --p-color: #3498db; --e-color: #e74c3c; }
-        body { background: #1a1a2e; color: white; font-family: sans-serif; margin: 0; }
-        #setup-screen { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .class-btn { padding: 20px; margin: 10px; font-size: 20px; cursor: pointer; border-radius: 10px; border: none; width: 200px; }
-        .mage-btn { background: #3498db; color: white; }
-        .warrior-btn { background: #c0392b; color: white; }
-        /* 其餘樣式同前... */
+        :root { --mage: #3498db; --warrior: #c0392b; --neutral: #7f8c8d; --highlight: #f1c40f; --spell: #9b59b6; }
+        body { background: #0b0c10; color: #66fcf1; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; user-select: none; }
+        
+        /* 啟動介面 */
+        #setup-screen { position: fixed; inset: 0; background: radial-gradient(circle, #1f2833, #0b0c10); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .class-card { background: #1f2833; border: 2px solid #45a29e; padding: 30px; margin: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; width: 250px; text-align: center; }
+        .class-card:hover { transform: scale(1.1); background: #45a29e; color: #0b0c10; }
+
+        /* 遊戲佈局 */
+        #game-ui { display: grid; grid-template-rows: 60px 1fr 1fr 60px 180px; height: 100vh; }
+        .battlefield { display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
+        #enemy-board { background: rgba(255,0,0,0.05); }
+        #player-board { background: rgba(0,255,255,0.05); }
+
+        /* 卡牌樣式 */
+        .card { width: 110px; height: 150px; background: #c5c6c7; border-radius: 10px; color: #1f2833; position: relative; cursor: pointer; border: 3px solid #45a29e; font-size: 12px; transition: 0.2s; }
+        .card.spell { border-color: var(--spell); background: #e1bee7; }
+        .card.selected { border-color: var(--highlight); box-shadow: 0 0 20px var(--highlight); transform: translateY(-10px); }
+        .card.targeting-mode { cursor: crosshair; }
+        
+        .cost { position: absolute; top: -10px; left: -10px; background: #45a29e; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .stats { position: absolute; bottom: 5px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; }
+        .atk { color: #e67e22; } .hp { color: #e74c3c; }
+        .card-name { text-align: center; margin-top: 40px; font-weight: bold; }
+
+        /* 英雄區域 */
+        .hero { width: 70px; height: 70px; border-radius: 50%; border: 4px solid #45a29e; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+        .info-bar { display: flex; align-items: center; justify-content: space-around; background: #1f2833; border-top: 1px solid #45a29e; }
+        
+        /* 瞄準提示 */
+        #target-cursor { position: fixed; pointer-events: none; color: white; font-weight: bold; z-index: 2000; display: none; }
     </style>
 </head>
 <body>
 
-<!-- 職業選擇介面 -->
-<div id="setup-screen">
-    <h1>選擇你的職業</h1>
-    <button class="class-btn mage-btn" onclick="startGame('MAGE')">奧法大師 (法師)</button>
-    <button class="class-btn warrior-btn" onclick="startGame('WARRIOR')">鋼鐵之軀 (戰士)</button>
-</div>
+<div id="target-cursor">請選擇目標...</div>
 
-<div id="game-ui" style="display:none;">
-    <!-- 這裡放之前的遊戲容器內容 -->
-    <div id="game-container">
-        <!-- 渲染區域... (同前) -->
+<div id="setup-screen">
+    <h1>萬界裂痕：啟源</h1>
+    <p>請選擇您的首發職業</p>
+    <div style="display: flex;">
+        <div class="class-card" onclick="initGame('MAGE')"><h2>奧法師</h2><p>掌控元素與奧術飛彈</p></div>
+        <div class="class-card" onclick="initGame('WARRIOR')"><h2>破陣者</h2><p>鋼鐵意志與嗜血巨斧</p></div>
     </div>
 </div>
 
+<div id="game-ui" style="display:none;">
+    <div class="info-bar">
+        <div>敵方英雄 HP: <span id="e-hp">30</span></div>
+        <div class="hero" id="e-hero" onclick="onTarget('E_HERO')">ENEMY</div>
+    </div>
+    
+    <div id="enemy-board" class="battlefield"></div>
+    <div id="player-board" class="battlefield"></div>
+
+    <div class="info-bar">
+        <div>能量: <span id="mana">0</span>/<span id="max-mana">0</span></div>
+        <div class="hero" id="p-hero">YOU</div>
+        <button onclick="endTurn()" style="padding:10px 20px; background:#45a29e; border:none; cursor:pointer; border-radius:5px;">結束回合</button>
+        <div>血量: <span id="p-hp">30</span></div>
+    </div>
+
+    <div id="hand-area" class="battlefield" style="background:#0b0c10;"></div>
+</div>
+
 <script>
-/** 
- * 模組一：資料庫 
- */
-const CARD_DATABASE = {
+/** 1. 靜態資料庫 (第一彈：啟源) **/
+const DB = {
     MAGE: [
-        { name: "見習法師", cost: 1, atk: 1, hp: 2, type: 'minion' },
-        { name: "火球術", cost: 4, atk: 6, hp: 0, type: 'spell' },
-        { name: "奧術巨人", cost: 8, atk: 8, hp: 8, type: 'minion' }
+        { name: "奧術學徒", cost: 2, atk: 3, hp: 2, type: "minion" },
+        { name: "火球術", cost: 4, atk: 6, hp: 0, type: "spell", target: "any" },
+        { name: "奧術飛彈", cost: 1, atk: 3, hp: 0, type: "spell", target: "random" }
     ],
     WARRIOR: [
-        { name: "狂暴老兵", cost: 3, atk: 2, hp: 4, type: 'minion' },
-        { name: "重裝步兵", cost: 2, atk: 2, hp: 3, type: 'minion' },
-        { name: "斬首", cost: 1, atk: 0, hp: 0, type: 'spell', desc: "造成4點傷害" }
+        { name: "精英守衛", cost: 3, atk: 2, hp: 5, type: "minion" },
+        { name: "重斬", cost: 2, atk: 4, hp: 0, type: "spell", target: "minion" },
+        { name: "致死打擊", cost: 4, atk: 6, hp: 0, type: "spell", target: "any" }
     ],
     NEUTRAL: [
-        { name: "守衛機器人", cost: 2, atk: 2, hp: 3, type: 'minion' },
-        { name: "冒險者", cost: 1, atk: 1, hp: 1, type: 'minion' }
+        { name: "路人甲", cost: 1, atk: 1, hp: 1, type: "minion" },
+        { name: "石拳巨魔", cost: 6, atk: 6, hp: 7, type: "minion" },
+        { name: "持盾衛士", cost: 2, atk: 0, hp: 4, type: "minion", taunt: true }
     ]
 };
 
-/** 
- * 模組二：遊戲引擎 
- */
-class GameCore {
-    constructor(playerClass) {
-        this.player = {
-            class: playerClass,
-            hp: 30,
-            mana: 1,
-            maxMana: 1,
-            deck: this.buildDeck(playerClass),
-            hand: [],
-            board: []
-        };
-        this.enemy = { hp: 30, board: [] };
-        this.initGame();
-    }
+/** 2. 遊戲邏輯引擎 **/
+let game = {
+    p: { hp: 30, mana: 1, maxMana: 1, hand: [], board: [], deck: [] },
+    e: { hp: 30, board: [{name: "木人樁", atk: 0, hp: 10, type: "minion"}] },
+    state: "IDLE", // IDLE, TARGETING_SPELL, TARGETING_ATTACK
+    selectedIdx: null
+};
 
-    buildDeck(pClass) {
-        // 抓取職業卡 + 中立卡 混合成 30 張
-        let pool = [...CARD_DATABASE[pClass], ...CARD_DATABASE.NEUTRAL];
-        let deck = [];
-        for(let i=0; i<30; i++) deck.push({...pool[i % pool.length]});
-        return deck;
-    }
-
-    initGame() {
-        for(let i=0; i<3; i++) this.draw();
-    }
-
-    draw() {
-        if(this.player.deck.length > 0 && this.player.hand.length < 10) {
-            this.player.hand.push(this.player.deck.pop());
-        }
-    }
-    
-    // 這裡後續會加入更複雜的法術邏輯判斷
-}
-
-/** 
- * 模組三：UI 渲染器 (與 GameCore 互動)
- */
-let game;
-function startGame(choice) {
+function initGame(choice) {
     document.getElementById('setup-screen').style.display = 'none';
-    document.getElementById('game-ui').style.display = 'block';
-    game = new GameCore(choice);
-    // 此處呼叫渲染函式... (略)
+    document.getElementById('game-ui').style.display = 'grid';
+    
+    // 組建30張牌組
+    let pool = [...DB[choice], ...DB.NEUTRAL];
+    for(let i=0; i<30; i++) game.p.deck.push({...pool[i % pool.length]});
+    
+    // 初始抽牌
+    for(let i=0; i<3; i++) drawCard();
+    render();
 }
 
-// 監製，這是我重構後的邏輯。
+function drawCard() {
+    if(game.p.deck.length > 0 && game.p.hand.length < 10) {
+        game.p.hand.push(game.p.deck.pop());
+    }
+}
+
+function endTurn() {
+    if(game.p.maxMana < 10) game.p.maxMana++;
+    game.p.mana = game.p.maxMana;
+    game.p.board.forEach(m => m.canAttack = true);
+    drawCard();
+    render();
+}
+
+/** 3. 點擊處理 (核心交互) **/
+function onCardClick(idx) {
+    let card = game.p.hand[idx];
+    if(game.p.mana < card.cost) return alert("能量不足！");
+
+    if(card.type === "minion") {
+        if(game.p.board.length >= 7) return;
+        game.p.mana -= card.cost;
+        game.p.board.push({...game.p.hand.splice(idx, 1)[0], canAttack: false});
+    } else if(card.type === "spell") {
+        game.state = "TARGETING_SPELL";
+        game.selectedIdx = idx;
+    }
+    render();
+}
+
+function onMinionClick(side, idx) {
+    if(game.state === "IDLE" && side === 'p') {
+        if(!game.p.board[idx].canAttack) return;
+        game.state = "TARGETING_ATTACK";
+        game.selectedIdx = idx;
+    } else if(game.state === "TARGETING_ATTACK" && side === 'e') {
+        // 生物互撞
+        let pM = game.p.board[game.selectedIdx];
+        let eM = game.e.board[idx];
+        eM.hp -= pM.atk; pM.hp -= eM.atk;
+        pM.canAttack = false;
+        resolveDeath();
+    } else if(game.state === "TARGETING_SPELL") {
+        // 法術砸生物
+        let spell = game.p.hand[game.selectedIdx];
+        let target = (side === 'p' ? game.p.board : game.e.board)[idx];
+        target.hp -= spell.atk;
+        game.p.mana -= spell.cost;
+        game.p.hand.splice(game.selectedIdx, 1);
+        resolveDeath();
+    }
+    render();
+}
+
+function onTarget(type) {
+    if(game.state === "TARGETING_ATTACK" && type === "E_HERO") {
+        game.e.hp -= game.p.board[game.selectedIdx].atk;
+        game.p.board[game.selectedIdx].canAttack = false;
+    } else if(game.state === "TARGETING_SPELL" && type === "E_HERO") {
+        game.e.hp -= game.p.hand[game.selectedIdx].atk;
+        game.p.mana -= game.p.hand[game.selectedIdx].cost;
+        game.p.hand.splice(game.selectedIdx, 1);
+    }
+    resolveDeath();
+    render();
+}
+
+function resolveDeath() {
+    game.p.board = game.p.board.filter(m => m.hp > 0);
+    game.e.board = game.e.board.filter(m => m.hp > 0);
+    game.state = "IDLE";
+}
+
+/** 4. 渲染引擎 **/
+function render() {
+    document.getElementById('p-hp').innerText = game.p.hp;
+    document.getElementById('e-hp').innerText = game.e.hp;
+    document.getElementById('mana').innerText = game.p.mana;
+    document.getElementById('max-mana').innerText = game.p.maxMana;
+
+    // 渲染手牌
+    const hand = document.getElementById('hand-area');
+    hand.innerHTML = '';
+    game.p.hand.forEach((c, i) => {
+        let div = createCardEl(c, i);
+        div.onclick = () => onCardClick(i);
+        if(game.state === "TARGETING_SPELL" && i === game.selectedIdx) div.classList.add('selected');
+        hand.appendChild(div);
+    });
+
+    // 渲染戰場
+    renderBoard('player-board', game.p.board, 'p');
+    renderBoard('enemy-board', game.e.board, 'e');
+    
+    // 指標提示
+    document.getElementById('target-cursor').style.display = (game.state !== "IDLE") ? 'block' : 'none';
+}
+
+function renderBoard(id, data, side) {
+    const board = document.getElementById(id);
+    board.innerHTML = '';
+    data.forEach((c, i) => {
+        let div = createCardEl(c, i);
+        div.onclick = () => onMinionClick(side, i);
+        if(game.state === "TARGETING_ATTACK" && side === 'p' && i === game.selectedIdx) div.classList.add('selected');
+        board.appendChild(div);
+    });
+}
+
+function createCardEl(c, i) {
+    let div = document.createElement('div');
+    div.className = `card ${c.type}`;
+    div.innerHTML = `<div class="cost">${c.cost}</div><div class="card-name">${c.name}</div>
+                     <div class="stats">${c.type==='minion' ? `<span class="atk">${c.atk}</span><span class="hp">${c.hp}</span>` : `<span class="atk">⚡ ${c.atk}</span>`}</div>`;
+    return div;
+}
+
+// 滑鼠追蹤 (瞄準提示)
+window.onmousemove = (e) => {
+    let cur = document.getElementById('target-cursor');
+    cur.style.left = (e.clientX + 10) + 'px';
+    cur.style.top = (e.clientY + 10) + 'px';
+}
 </script>
 </body>
 </html>
