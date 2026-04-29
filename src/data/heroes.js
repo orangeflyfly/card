@@ -5,10 +5,11 @@ export const HEROES = {
         id: 'LIN_FAN',
         name: "林凡",
         title: "萬界廚神",
-        hp: 30,
+        hp: 35, // 根據餐館老闆設定微調血量
         skillName: "暖心熱飯",
         description: "每回合開始時，隨機賦予一名友方棋子 +1/+1。",
-        // 對接效果 A 區：準備階段自動觸發
+        // --- 注入立繪路徑 ---
+        art: './assets/img/lin_fan.jpg', 
         effectTag: 'A_HERO_BUFF_RANDOM'
     },
     'DAN_DAN': {
@@ -18,7 +19,8 @@ export const HEROES = {
         hp: 30,
         skillName: "劍意通明",
         description: "戰鬥開始時，讓最左邊的棋子獲得「聖盾」。",
-        // 對接效果 A 區：戰鬥開始時觸發
+        // --- 注入立繪路徑 ---
+        art: './assets/img/dan_dan.jpg', 
         effectTag: 'A_HERO_SHIELD_LEFT'
     },
     'FEI_FEI': {
@@ -29,7 +31,8 @@ export const HEROES = {
         tribe: "半獸族",
         skillName: "半夜加班",
         description: "商店刷新時，有 20% 機率獲得 1 靈石。",
-        // 對接效果 A 區：刷新商店時判定
+        // --- 注入立繪路徑 ---
+        art: './assets/img/fei_fei.jpg', 
         effectTag: 'A_HERO_REFRESH_GOLD'
     },
     'MO_MO': {
@@ -41,7 +44,8 @@ export const HEROES = {
         skillName: "死者甦生",
         description: "消耗 1 靈石，使一個友方棋子獲得「重生」。",
         skillCost: 1,
-        // 對接效果 A 區：主動點擊觸發 (需要選擇目標)
+        // --- 注入立繪路徑 ---
+        art: './assets/img/mo_mo.jpg', 
         effectTag: 'A_HERO_REBORN_ACTIVE'
     }
 };
