@@ -1,4 +1,4 @@
-/* style.css - 萬界裂痕：水墨奇幻大修版 */
+/* style.css - 萬界裂痕：水墨奇幻大修版 (萬界戰場自走棋擴充) */
 
 :root { 
     --mage: #2c3e50; 
@@ -131,21 +131,21 @@ body {
 .card { 
     width: 125px; height: 175px; 
     background: var(--card-bg); 
-    border-radius: 6px; /* 水墨畫風不需要太圓滑的邊角 */
+    border-radius: 6px; 
     color: var(--primary); 
     position: relative; 
     cursor: pointer; 
     border: 2px solid #444; 
     box-shadow: 5px 10px 15px rgba(0,0,0,0.8);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: visible; /* 讓超出邊界的標籤(如嘲諷盾牌)顯示出來 */
+    overflow: visible; 
 }
 
 /* 抽牌動畫 */
-.card.drawing { animation: drawAnim 0.7s ease-out forwards; }
+.card.drawing { animation: drawAnim 0.4s ease-out forwards; }
 @keyframes drawAnim {
-    0% { transform: translate(600px, 300px) rotate(60deg) scale(0.1); opacity: 0; }
-    100% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+    0% { transform: translateY(50px) scale(0.5); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .card-art {
@@ -153,7 +153,7 @@ body {
     background-size: cover; background-position: center;
     border-bottom: 2px solid var(--gold);
     border-radius: 4px 4px 0 0;
-    filter: sepia(0.3) contrast(1.1); /* 稍微帶點復古色調 */
+    filter: sepia(0.3) contrast(1.1); 
 }
 
 .card-name {
@@ -169,7 +169,7 @@ body {
     z-index: 100; 
 }
 
-/* 新增：卡牌疲勞狀態 */
+/* 疲勞/無法操作狀態 */
 .card.exhausted {
     filter: grayscale(80%) brightness(0.6);
     cursor: not-allowed;
@@ -220,16 +220,6 @@ body {
 }
 .msg-show { opacity: 1 !important; transform: translate(-50%, -50%) scale(1.2) !important; }
 
-#end-btn {
-    padding: 12px 30px; 
-    background: linear-gradient(to bottom, #8b0000, #4a0000); /* 硃砂紅漸層 */
-    border: 2px solid var(--gold); color: var(--primary); border-radius: 4px;
-    cursor: pointer; font-weight: bold; font-size: 1.1rem; letter-spacing: 2px;
-    transition: 0.3s;
-    font-family: inherit;
-}
-#end-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(139, 0, 0, 0.8); background: #a00000; }
-
 /* 法術/攻擊投射物與傷害數字 */
 .projectile { position: fixed; width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle, #fff, #e74c3c); box-shadow: 0 0 20px #e74c3c; z-index: 2500; transition: all 0.5s linear; pointer-events: none; }
 .particle { position: fixed; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; pointer-events: none; z-index: 2499; animation: fadeOut 0.4s forwards; }
@@ -240,3 +230,42 @@ body {
 
 .damage-pop { position: fixed; font-size: 3rem; font-weight: bold; color: white; text-shadow: 0 0 10px red; pointer-events: none; z-index: 3000; animation: popAnim 0.6s ease-out forwards; }
 @keyframes popAnim { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 50% { transform: translateY(-40px) scale(1.5); } 100% { transform: translateY(-60px) scale(1); opacity: 0; } }
+
+/* =========================================
+   【自走棋專屬樣式追加】
+   ========================================= */
+
+/* 頂部階段與計時器 */
+.phase-display { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; }
+.timer-display { 
+    font-size: 2rem; font-weight: 900; color: var(--primary); 
+    text-shadow: 0 0 15px var(--primary);
+}
+
+/* 靈石與操作按鈕 */
+.resource-display { font-size: 1.2rem; color: #66d9ef; font-weight: bold; text-shadow: 0 0 10px #66d9ef; }
+
+.action-btn {
+    padding: 10px 20px; 
+    background: linear-gradient(to bottom, #2c3e50, #1a252f);
+    border: 2px solid var(--gold); color: var(--primary); border-radius: 4px;
+    cursor: pointer; font-weight: bold; font-size: 1rem; letter-spacing: 2px;
+    transition: 0.3s; font-family: inherit;
+}
+.action-btn:hover { transform: scale(1.05); border-color: var(--highlight); box-shadow: 0 0 15px var(--gold); }
+
+.end-btn { background: linear-gradient(to bottom, #8b0000, #4a0000); }
+.end-btn:hover { box-shadow: 0 0 20px rgba(139, 0, 0, 0.8); background: #a00000; }
+
+/* 招募區 (商店) 的特殊背景，區分戰場與商店 */
+.shop-bg {
+    background: linear-gradient(to top, rgba(20,20,20,0.9), transparent);
+    border-top: 1px dashed var(--gold);
+}
+
+/* 商店裡的卡牌 hover 效果改成「購買」的感覺 */
+#shop-area .card:hover {
+    transform: translateY(-15px) scale(1.05);
+    box-shadow: 0 0 30px #66d9ef;
+    border-color: #66d9ef;
+}
