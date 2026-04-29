@@ -46,12 +46,12 @@
     
     <!-- 戰場區域：敵方生物 -->
     <div id="enemy-board" class="battlefield">
-        <!-- 由 game.js 動態渲染卡牌 -->
+        <!-- 由 ui.js 動態渲染卡牌 -->
     </div>
     
     <!-- 戰場區域：我方生物 -->
     <div id="player-board" class="battlefield">
-        <!-- 由 game.js 動態渲染卡牌 -->
+        <!-- 由 ui.js 動態渲染卡牌 -->
     </div>
 
     <!-- 中部資訊列：玩家狀態 -->
@@ -71,14 +71,12 @@
 
     <!-- 底部區域：玩家手牌 -->
     <div id="hand-area" class="battlefield">
-        <!-- 由 game.js 動態渲染卡牌 -->
+        <!-- 由 ui.js 動態渲染卡牌 -->
     </div>
 </div>
 
-<!-- 4. 引用遊戲核心邏輯腳本 (注意載入順序：資料 -> 引擎 -> 邏輯) -->
-<script src="database.js"></script>
-<script src="engine.js"></script>
-<script src="game.js"></script>
+<!-- 4. 引用現代化模組主程式 (加上 type="module") -->
+<script type="module" src="main.js"></script>
 
 </body>
 </html>
