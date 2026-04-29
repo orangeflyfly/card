@@ -2,19 +2,19 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>萬界裂痕 - 模組化啟源版</title>
+    <title>萬界裂痕 - 水墨奇幻版</title>
     <!-- 連結外部樣式表 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- 1. 新增：全域訊息提示容器 (用於顯示「你的回合」、「能量不足」等) -->
+<!-- 1. 全域訊息提示容器 (用於顯示「你的回合」、「能量不足」等) -->
 <div id="game-msg"></div>
 
 <!-- 2. 職業選擇畫面 (對應 style.css 中的 #setup-screen) -->
 <div id="setup-screen">
     <h1>萬界裂痕</h1>
-    <p>THE OMNI RIFT: GENESIS</p>
+    <p>THE OMNI RIFT: INK & FANTASY</p>
     <div class="class-select-area">
         <div class="class-card-btn" onclick="startGame('MAGE')">
             <h2>奧法師</h2>
@@ -32,7 +32,6 @@
     
     <!-- 頂部資訊列：敵方狀態 -->
     <div class="info-bar">
-        <!-- 修正：新增敵方能量動態顯示，讓 AI 行為透明化 -->
         <div>敵方能量: ⚡ <span id="e-mana">1</span></div>
         
         <!-- 敵方英雄頭像 -->
@@ -76,7 +75,9 @@
     </div>
 </div>
 
-<!-- 4. 引用遊戲核心邏輯腳本 -->
+<!-- 4. 引用遊戲核心邏輯腳本 (注意載入順序：資料 -> 引擎 -> 邏輯) -->
+<script src="database.js"></script>
+<script src="engine.js"></script>
 <script src="game.js"></script>
 
 </body>
