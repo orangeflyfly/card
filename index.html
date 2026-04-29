@@ -3,37 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <title>萬界裂痕 - 模組化啟源版</title>
+    <!-- 連結外部樣式表 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- 1. 新增：全域訊息提示容器 (用於顯示「你的回合」、「能量不足」等) -->
+<div id="game-msg"></div>
+
+<!-- 2. 職業選擇畫面 (對應 style.css 中的 #setup-screen) -->
 <div id="setup-screen">
     <h1>萬界裂痕 - 啟源</h1>
-    <div style="display: flex; gap: 20px;">
+    <div class="class-select-area" style="display: flex; gap: 20px;">
         <button onclick="startGame('MAGE')">法師啟動</button>
         <button onclick="startGame('WARRIOR')">戰士啟動</button>
     </div>
 </div>
 
+<!-- 3. 遊戲主介面 (對應 style.css 中的 #game-ui) -->
 <div id="game-ui" style="display:none;">
+    
+    <!-- 頂部資訊列：敵方狀態 -->
     <div class="info-bar">
-        <div>能量: ⚡</div>
-        <div class="hero" id="e-hero" onclick="handleSelect('E_HERO', this)">敵方 HP:<span id="e-hp">30</span></div>
+        <!-- 修正：新增敵方能量動態顯示，讓 AI 行為透明化 -->
+        <div>敵方能量: ⚡ <span id="e-mana">1</span></div>
+        
+        <!-- 敵方英雄頭像 -->
+        <div class="hero" id="e-hero" onclick="handleSelect('E_HERO', this)">
+            <div style="font-size: 12px; opacity: 0.8;">敵方英雄</div>
+            <div style="font-size: 18px;">HP: <span id="e-hp">30</span></div>
+        </div>
+        
+        <!-- 敵方手牌計數 -->
         <div>對手手牌: <span id="e-hand">3</span></div>
     </div>
     
-    <div id="enemy-board" class="battlefield"></div>
-    <div id="player-board" class="battlefield"></div>
+    <!-- 戰場區域：敵方生物 -->
+    <div id="enemy-board" class="battlefield">
+        <!-- 由 game.js 動態渲染卡牌 -->
+    </div>
+    
+    <!-- 戰場區域：我方生物 -->
+    <div id="player-board" class="battlefield">
+        <!-- 由 game.js 動態渲染卡牌 -->
+    </div>
 
+    <!-- 中部資訊列：玩家狀態 -->
     <div class="info-bar">
-        <div>能量: <span id="p-mana">1</span>/<span id="p-max">1</span></div>
-        <div class="hero" id="p-hero">我方 HP:<span id="p-hp">30</span></div>
+        <!-- 玩家能量顯示 -->
+        <div>我的能量: ⚡ <span id="p-mana">1</span> / <span id="p-max">1</span></div>
+        
+        <!-- 我方英雄頭像 -->
+        <div class="hero" id="p-hero">
+            <div style="font-size: 12px; opacity: 0.8;">我方英雄</div>
+            <div style="font-size: 18px;">HP: <span id="p-hp">30</span></div>
+        </div>
+        
+        <!-- 結束回合按鈕 -->
         <button id="end-btn" onclick="playerEndTurn()">結束回合</button>
     </div>
 
-    <div id="hand-area" class="battlefield"></div>
+    <!-- 底部區域：玩家手牌 -->
+    <div id="hand-area" class="battlefield">
+        <!-- 由 game.js 動態渲染卡牌 -->
+    </div>
 </div>
 
+<!-- 4. 引用遊戲核心邏輯腳本 -->
 <script src="game.js"></script>
+
 </body>
 </html>
