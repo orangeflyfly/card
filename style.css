@@ -1,0 +1,64 @@
+/* style.css */
+:root {
+    --p-color: #00d2ff;
+    --e-color: #ff4b2b;
+    --mage-glow: #9b59b6;
+    --fire-glow: #ff4500;
+}
+
+body {
+    background: #0b0c10;
+    color: white;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* 強化火球：增加旋轉感與內發光 */
+.projectile {
+    position: fixed;
+    width: 25px;
+    height: 25px;
+    background: radial-gradient(circle, #fff 0%, #ffcc00 30%, #ff4500 70%, transparent 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 25px #ff4500, 0 0 50px #ff8c00;
+    z-index: 1000;
+    transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    /* 增加一點旋轉動畫，讓火球看起來在「攪動」 */
+    animation: rotateFire 0.5s linear infinite;
+}
+
+@keyframes rotateFire {
+    from { transform: rotate(0deg) scale(1); }
+    to { transform: rotate(360deg) scale(1.1); }
+}
+
+/* 粒子軌跡：讓它有煙霧感 */
+.particle {
+    position: fixed;
+    background: #ff4500;
+    border-radius: 50%;
+    filter: blur(1px);
+    pointer-events: none;
+    animation: fadeAndShrink 0.4s forwards;
+}
+
+@keyframes fadeAndShrink {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(0.1); opacity: 0; }
+}
+
+/* 卡牌樣式：增加懸浮陰影 */
+.card {
+    width: 110px;
+    height: 150px;
+    background: linear-gradient(135deg, #2c3e50, #000);
+    border: 2px solid #45a29e;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card:hover {
+    box-shadow: 0 0 25px var(--p-color);
+    transform: translateY(-15px) rotate(2deg);
+}
