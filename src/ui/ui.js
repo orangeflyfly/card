@@ -26,6 +26,15 @@ export function renderUI(game) {
     const timerEl = document.getElementById('game-timer');
     if (timerEl) timerEl.innerText = game.timer;
 
+    // --- 新增：更新英雄立繪 (不影響原始資訊更新) ---
+    const pHeroEl = document.getElementById('p-hero');
+    if (pHeroEl && game.currentHero && game.currentHero.art) {
+        // 將英雄資料庫中的 art 路徑套用至背景
+        pHeroEl.style.backgroundImage = `url('${game.currentHero.art}')`;
+        pHeroEl.style.backgroundSize = 'cover';
+        pHeroEl.style.backgroundPosition = 'center';
+    }
+
     // 2. 渲染種族羈絆區
     renderBonds(game.p.board);
 
@@ -87,6 +96,7 @@ function renderArea(id, data, type, game) {
             e.stopPropagation();
             if (type === 'SHOP') window.buyCard(i);
             if (type === 'PLAYER_BOARD' && game.currentHero.id === 'MO_MO' && game.phase === 'PREP') {
+                // 墨墨專屬技能：點擊場上棋子賦予重生
                 window.useHeroSkill(i);
             }
         };
