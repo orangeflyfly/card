@@ -1,4 +1,4 @@
-/* game.js - 萬界裂痕 核心邏輯 (串接資料庫與引擎版) */
+/* game.js - 萬界裂痕 核心邏輯 (特效升級 & Bug修復版) */
 
 let game = {
     p: { hp: 30, mana: 1, max: 1, hand: [], board: [] },
@@ -26,7 +26,7 @@ function startGame(choice) {
     game.p.mana = game.p.max = 1;
     game.e.mana = game.e.max = 1;
 
-    // 初始抽牌：使用 CARD_DB
+    // 初始抽牌
     for(let i=0; i<4; i++) { 
         draw('p', choice); 
         draw('e', 'WARRIOR'); // 對手預設為破陣者
@@ -37,12 +37,10 @@ function startGame(choice) {
 
 function draw(who, choice) {
     if (game[who].hand.length >= 10) return; 
-    // 從 database.js 的 CARD_DB 讀取卡池
     let pool = [...CARD_DB[choice || 'NEUTRAL'], ...CARD_DB.NEUTRAL];
-    let card = JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)])); // 深拷貝防止污染原型
+    let card = JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)])); 
     card.isDrawing = true;
     
-    // 如果是丹丹，自帶衝鋒 (直接 ready)
     if (card.keyword === 'charge') card.ready = true;
     else card.ready = false;
 
@@ -54,19 +52,59 @@ function draw(who, choice) {
     }, 600);
 }
 
-function createFX(fromEl, toEl, colorType = "fire") {
+// 🌟 升級版特效產生器
+function createFX(fromEl, toEl, effectType = "fire") {
     if(!fromEl || !toEl) return;
     const fromRect = fromEl.getBoundingClientRect();
     const toRect = toEl.getBoundingClientRect();
+
+    // ⚔️ 近戰刀光特效 (不需要飛行，直接在目標身上爆發)
+    if (effectType === 'slash') {
+        const slash = document.createElement('div');
+        slash.innerText = '💢'; 
+        slash.style.position = 'fixed';
+        slash.style.fontSize = '60px';
+        slash.style.left = toRect.left + (toRect.width/2) - 30 + 'px';
+        slash.style.top = toRect.top + (toRect.height/2) - 30 + 'px';
+        slash.style.zIndex = '3000';
+        slash.style.pointerEvents = 'none';
+        slash.style.transition = 'transform 0.2s, opacity 0.3s';
+        slash.style.transform = 'scale(0.1) rotate(-20deg)';
+        slash.style.filter = 'drop-shadow(0 0 15px #e74c3c)';
+        document.body.appendChild(slash);
+        
+        // 瞬間放大
+        setTimeout(() => {
+            slash.style.transform = 'scale(1.5) rotate(10deg)';
+            slash.style.opacity = '1';
+        }, 10);
+        
+        setTimeout(() => {
+            slash.style.opacity = '0';
+        }, 200);
+
+        setTimeout(() => {
+            slash.remove();
+            toEl.classList.add('shake');
+            showDamagePop(toEl, '💥');
+            setTimeout(() => toEl.classList.remove('shake'), 200);
+        }, 300);
+        return; 
+    }
+
+    // ☄️ 遠程飛行特效
     const p = document.createElement('div');
     p.className = 'projectile';
     
-    if(colorType === "spell") {
+    if(effectType === "spell") {
         p.style.background = "radial-gradient(circle, #fff 10%, #e0b0ff 40%, #9b59b6 80%)";
         p.style.boxShadow = "0 0 20px #9b59b6, 0 0 40px #6a1b9a";
-    } else if (colorType === "heal") {
+    } else if (effectType === "heal") {
         p.style.background = "radial-gradient(circle, #fff 10%, #a8e6cf 40%, #1fab89 80%)";
         p.style.boxShadow = "0 0 20px #1fab89";
+    } else { // fire
+        p.style.background = "radial-gradient(circle, #fff 10%, #f39c12 40%, #e74c3c 80%)";
+        p.style.boxShadow = "0 0 20px #e74c3c, 0 0 40px #c0392b";
     }
 
     p.style.left = (fromRect.left + fromRect.width/2) + 'px';
@@ -77,8 +115,10 @@ function createFX(fromEl, toEl, colorType = "fire") {
         const rect = p.getBoundingClientRect();
         const part = document.createElement('div');
         part.className = 'particle';
-        if(colorType === "spell") part.style.background = "#9b59b6";
-        if(colorType === "heal") part.style.background = "#1fab89";
+        if(effectType === "spell") part.style.background = "#9b59b6";
+        else if(effectType === "heal") part.style.background = "#1fab89";
+        else part.style.background = "#f39c12"; // 火焰殘影
+        
         part.style.left = rect.left + rect.width/2 + 'px';
         part.style.top = rect.top + rect.height/2 + 'px';
         document.body.appendChild(part);
@@ -94,7 +134,7 @@ function createFX(fromEl, toEl, colorType = "fire") {
         clearInterval(trail);
         p.remove();
         toEl.classList.add('shake');
-        showDamagePop(toEl, colorType === 'heal' ? '✨' : '💥');
+        showDamagePop(toEl, effectType === 'heal' ? '✨' : '💥');
         setTimeout(() => toEl.classList.remove('shake'), 200);
     }, 500);
 }
@@ -116,7 +156,6 @@ function handleSelect(type, el, idx) {
     if(game.state === 'IDLE') {
         if(type === 'P_HAND') {
             let card = game.p.hand[idx];
-            // 呼叫引擎判斷是否可打出
             if(!BattleEngine.canPlayCard(game.p, card)) {
                 showNotice(game.p.mana < card.cost ? "能量不足！" : "場上已滿！");
                 return;
@@ -126,7 +165,6 @@ function handleSelect(type, el, idx) {
                 game.p.mana -= card.cost;
                 game.p.board.push(game.p.hand.splice(idx, 1)[0]);
             } else if(card.type === 'spell') {
-                // 特殊法術：萬界餐館 (直接發動，不需指定目標)
                 if(card.keyword === 'heal') {
                     game.p.mana -= card.cost;
                     game.p.hand.splice(idx, 1);
@@ -173,10 +211,15 @@ function executeHealSpell() {
 
 function executeAction(type, el, idx) {
     let attackerEl;
-    if(game.state === 'TARGETING_SPELL') {
-        attackerEl = document.querySelectorAll('#hand-area .card')[game.selectedIdx];
-    } else if(game.state === 'TARGETING_ATK') {
-        attackerEl = document.querySelectorAll('#player-board .card')[game.selectedIdx];
+    
+    // 【修復關鍵】：先將狀態與卡牌索引存起來，避免提早被清空
+    const actionState = game.state;
+    const selectedIdx = game.selectedIdx;
+
+    if(actionState === 'TARGETING_SPELL') {
+        attackerEl = document.querySelectorAll('#hand-area .card')[selectedIdx];
+    } else if(actionState === 'TARGETING_ATK') {
+        attackerEl = document.querySelectorAll('#player-board .card')[selectedIdx];
     }
 
     if(!attackerEl || type === 'P_HAND' || type === 'P_BOARD') {
@@ -188,8 +231,8 @@ function executeAction(type, el, idx) {
     const isHero = type === 'E_HERO';
     const targetMinion = isHero ? null : game.e.board[idx];
 
-    // 嘲諷阻擋判定 (如果是攻擊的話)
-    if(game.state === 'TARGETING_ATK') {
+    // 嘲諷判定
+    if(actionState === 'TARGETING_ATK') {
         if(!BattleEngine.isValidAttackTarget(isHero, targetMinion, game.e.board)) {
             showNotice("必須先攻擊嘲諷目標！");
             cancelTargeting();
@@ -198,30 +241,40 @@ function executeAction(type, el, idx) {
         }
     }
 
-    createFX(attackerEl, el, (game.state === 'TARGETING_SPELL' ? 'spell' : 'fire'));
+    // 判斷該播哪一種特效
+    let fxType = 'slash'; // 預設近戰攻擊為刀光
+    if (actionState === 'TARGETING_SPELL') {
+        let spellCard = game.p.hand[selectedIdx];
+        if (spellCard.name.includes("火")) fxType = 'fire';
+        else fxType = 'spell';
+    }
 
+    // 發射動畫
+    createFX(attackerEl, el, fxType);
+    
+    // 動畫發射後立刻解除瞄準狀態，讓玩家可以繼續操作別的牌
+    cancelTargeting();
+    render();
+
+    // 550毫秒後，動畫抵達目標，執行實際扣血邏輯
     setTimeout(() => {
-        if(game.state === 'TARGETING_SPELL') {
-            let card = game.p.hand[game.selectedIdx];
-            // 呼叫引擎計算包含林凡加成的法術傷害
+        if(actionState === 'TARGETING_SPELL') {
+            let card = game.p.hand[selectedIdx];
             let finalDmg = BattleEngine.calculateSpellDamage(card, game.p.board);
             
             if(isHero) game.e.hp -= finalDmg;
             else game.e.board[idx].hp -= finalDmg;
             
             game.p.mana -= card.cost;
-            game.p.hand.splice(game.selectedIdx, 1);
-        } else if(game.state === 'TARGETING_ATK') {
-            let pM = game.p.board[game.selectedIdx];
-            // 呼叫引擎計算戰鬥傷害與反擊
+            game.p.hand.splice(selectedIdx, 1);
+        } else if(actionState === 'TARGETING_ATK') {
+            let pM = game.p.board[selectedIdx];
             BattleEngine.calculateCombat(pM, isHero ? game.e : game.e.board[idx], isHero);
             pM.ready = false;
         }
         cleanUp();
         render();
     }, 550);
-
-    cancelTargeting();
 }
 
 function cleanUp() {
@@ -231,7 +284,7 @@ function cleanUp() {
     if(game.p.hp <= 0) showNotice("💀 裂痕吞噬了你...");
 }
 
-// AI 升級版：懂得思考生物交換與嘲諷
+// AI 升級版
 async function playerEndTurn() {
     if(game.turn !== 'P') return;
     game.turn = 'E';
@@ -263,8 +316,8 @@ async function playerEndTurn() {
         }
     }
 
-    // AI 攻擊：尋找場上所有可以攻擊的生物
-    game.e.board.forEach(m => m.ready = true); // 簡化：AI生物下回合自動準備好
+    // AI 攻擊
+    game.e.board.forEach(m => m.ready = true);
     for(let i=0; i < game.e.board.length; i++) {
         let attacker = game.e.board[i];
         if (attacker.hp <= 0 || !attacker.ready) continue;
@@ -272,20 +325,17 @@ async function playerEndTurn() {
         const fromEl = document.querySelectorAll('#enemy-board .card')[i];
         if(!fromEl) continue;
 
-        // 1. 尋找嘲諷
         let taunts = game.p.board.filter(m => m.keyword === 'taunt');
         let target = null;
         let isTargetHero = false;
 
         if (taunts.length > 0) {
-            target = taunts[0]; // 乖乖打嘲諷
+            target = taunts[0];
         } else {
-            // 2. 聰明交換：找可以無傷單殺的敵方怪
             let bestTrade = game.p.board.find(m => m.hp <= attacker.atk && m.atk < attacker.hp);
             if (bestTrade) {
                 target = bestTrade;
             } else {
-                // 3. 沒得賺就打臉
                 target = game.p;
                 isTargetHero = true;
             }
@@ -294,12 +344,16 @@ async function playerEndTurn() {
         let targetEl = isTargetHero ? document.getElementById('p-hero') : document.querySelectorAll('#player-board .card')[game.p.board.indexOf(target)];
 
         if(targetEl) {
-            createFX(fromEl, targetEl, "fire");
+            // AI 攻擊也使用刀光特效
+            createFX(fromEl, targetEl, "slash");
+            
+            // 延遲一點點時間讓動畫播完再扣血
+            await new Promise(r => setTimeout(r, 300));
             BattleEngine.calculateCombat(attacker, target, isTargetHero);
             attacker.ready = false;
-            await new Promise(r => setTimeout(r, 800));
             cleanUp();
             render();
+            await new Promise(r => setTimeout(r, 500));
         }
     }
 
@@ -335,11 +389,10 @@ function render() {
             if(c.isDrawing) classes.push('drawing');
             if(c.type === 'spell') classes.push('spell-card');
             if(isSelected && c.type === 'spell') classes.push('spell-targeting');
-            if(!c.ready && type === 'P_BOARD') classes.push('exhausted'); // 稍後可在 CSS 加入灰暗效果
+            if(!c.ready && type === 'P_BOARD') classes.push('exhausted');
             
             div.className = classes.join(' ');
             
-            // 關鍵字視覺圖示
             let iconHTML = '';
             if(c.keyword === 'taunt') iconHTML = `<div style="position:absolute; top:-15px; right:-15px; font-size:28px; filter:drop-shadow(0 0 5px #000); z-index:20;">🛡️</div>`;
             if(c.keyword === 'spell_damage') iconHTML = `<div style="position:absolute; top:-15px; right:-15px; font-size:28px; filter:drop-shadow(0 0 5px #9b59b6); z-index:20;">✨</div>`;
