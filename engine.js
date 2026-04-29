@@ -1,72 +1,62 @@
-// engine.js - 戰鬥與規則核心引擎
+// engine.js - 萬界戰場 (Auto Battler) 核心戰鬥引擎
 
 export class BattleEngine {
     
     /**
-     * 計算戰鬥結果 (修正了英雄不會反擊的邏輯)
-     * @param {Object} attacker - 攻擊者 (必定是手下)
-     * @param {Object} defender - 防禦者 (手下或英雄)
-     * @param {boolean} isDefenderHero - 防禦者是否為英雄
-     * @returns {Object} 雙方是否死亡的狀態
+     * 計算單次交鋒的傷害結算
+     * @param {Object} attacker - 攻擊方棋子
+     * @param {Object} defender - 防禦方棋子
      */
-    static calculateCombat(attacker, defender, isDefenderHero = false) {
-        // 防禦者扣除攻擊者的攻擊力
+    static calculateCombat(attacker, defender) {
+        // 互相造成等同於攻擊力的傷害
         defender.hp -= attacker.atk;
-        
-        // 如果防禦者不是英雄，且具有攻擊力，攻擊者也會受傷
-        if (!isDefenderHero && defender.atk) {
+        if (defender.atk) {
             attacker.hp -= defender.atk;
         }
-        
-        return { 
-            attackerDead: attacker.hp <= 0, 
-            defenderDead: defender.hp <= 0 
-        };
     }
 
     /**
-     * 判斷是否可以打出該卡牌
-     */
-    static canPlayCard(player, card) {
-        // 能量必須足夠，且如果是手下牌，場上不能超過 7 隻
-        return player.mana >= card.cost && (card.type !== 'minion' || player.board.length < 7);
-    }
-
-    /**
-     * 檢查攻擊目標是否合法 (實裝「嘲諷」關鍵字邏輯)
-     * @param {boolean} isTargetingHero - 是否瞄準英雄
-     * @param {Object} targetMinion - 瞄準的手下物件 (若瞄準英雄則為 null)
+     * 自動尋找攻擊目標 (自走棋核心 AI)
+     * 邏輯：優先打嘲諷，若無嘲諷則隨機選擇一名存活敵人
      * @param {Array} enemyBoard - 敵方場上陣列
-     * @returns {boolean} 是否可以攻擊該目標
+     * @returns {Object|null} 目標棋子，若全滅則回傳 null
      */
-    static isValidAttackTarget(isTargetingHero, targetMinion, enemyBoard) {
-        // 檢查敵方場上是否有嘲諷手下
-        const hasTaunt = enemyBoard.some(minion => minion.keyword === 'taunt');
+    static findAutoTarget(enemyBoard) {
+        // 只找活著的敵人
+        const aliveEnemies = enemyBoard.filter(m => m.hp > 0);
+        if (aliveEnemies.length === 0) return null;
+
+        // 1. 尋找是否有帶有「嘲諷 (taunt)」的目標
+        const taunts = aliveEnemies.filter(m => m.keyword === 'taunt');
         
-        if (hasTaunt) {
-            // 如果場上有嘲諷，但玩家瞄準英雄 -> 不合法
-            if (isTargetingHero) return false;
-            // 如果場上有嘲諷，但瞄準的手下沒有嘲諷 -> 不合法
-            if (targetMinion && targetMinion.keyword !== 'taunt') return false;
-        }
+        // 2. 如果有嘲諷，從嘲諷中隨機挑選；沒有則從所有存活敵人中隨機挑選
+        const targetPool = taunts.length > 0 ? taunts : aliveEnemies;
+        const randomIndex = Math.floor(Math.random() * targetPool.length);
         
-        return true; // 沒有嘲諷或是乖乖打嘲諷，則合法
+        return targetPool[randomIndex];
     }
 
     /**
-     * 計算實際法術傷害 (實裝「法術傷害」關鍵字加成)
-     * @param {Object} spellCard - 施放的法術卡
-     * @param {Array} playerBoard - 施放方場上陣列
-     * @returns {number} 計算加成後的最終傷害
+     * 戰鬥開始時的技能結算 (處理英雄被動與光環)
+     * @param {Array} board - 己方場上陣列
+     * @param {Object} hero - 己方英雄
      */
-    static calculateSpellDamage(spellCard, playerBoard) {
-        let baseDamage = spellCard.atk || 0;
-        
-        // 尋找場上是否有法術傷害加成的手下 (例如：林凡)
-        let bonusDamage = playerBoard.reduce((sum, minion) => {
-            return sum + (minion.keyword === 'spell_damage' ? 2 : 0); // 假設法傷預設 +2
-        }, 0);
+    static triggerStartOfCombat(board, hero) {
+        if (board.length === 0) return;
 
-        return baseDamage + bonusDamage;
+        // 【英雄技能結算】
+        // 丹丹：最左邊單位 +2 攻擊
+        if (hero && hero.id === 'h2') { 
+            board[0].atk += 2;
+        }
+
+        // 【棋子技能結算】
+        board.forEach((minion, index) => {
+            // 餐館小二光環：相鄰友軍生命 +2
+            if (minion.keyword === 'heal_aura') {
+                if (index > 0) board[index - 1].hp += 2;
+                if (index < board.length - 1) board[index + 1].hp += 2;
+            }
+        });
     }
 }
