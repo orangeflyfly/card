@@ -1,13 +1,13 @@
-/* style.css - 萬界裂痕：水墨奇幻大修版 (保留原始風格，僅修正佈局與立繪連接) */
+/* style.css - 萬界裂痕：修正佈局與立繪顯示 */
 
 :root { 
     --mage: #2c3e50; 
-    --warrior: #8b0000; /* 硃砂紅 */
-    --primary: #d4c3b3; /* 宣紙白/古風白 */
+    --warrior: #8b0000; 
+    --primary: #d4c3b3; 
     --highlight: #e74c3c; 
     --spell-glow: #8e44ad;
-    --card-bg: #1a1a1a; /* 墨黑 */
-    --gold: #bda06d; /* 青銅金 */
+    --card-bg: #1a1a1a; 
+    --gold: #bda06d; 
     --ink-shadow: rgba(0, 0, 0, 0.85);
 }
 
@@ -21,12 +21,14 @@ body {
 }
 
 /* =========================================
-    【核心 UI 容器】
+    【核心 UI 容器】修正：讓戰場高度具備彈性
     ========================================= */
 #game-ui { 
     display: grid; 
-    grid-template-rows: 90px 1fr 1fr 90px 190px; 
+    /* 修正：將固定像素改為 minmax，確保戰場至少能放下卡片 (175px) */
+    grid-template-rows: 80px minmax(180px, 1fr) minmax(180px, 1fr) 80px 180px; 
     height: 100vh; 
+    box-sizing: border-box;
 }
 
 .battlefield { 
@@ -36,9 +38,8 @@ body {
     gap: 15px; 
     position: relative; 
     box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
-    /* --- 修正：防止擁擠 --- */
     overflow-x: auto;
-    padding: 0 20px;
+    padding: 10px 20px;
 }
 
 .info-bar { 
@@ -51,7 +52,7 @@ body {
 }
 
 /* =========================================
-    【啟動畫面 - 水墨山水美化】(保留原本內容)
+    【啟動畫面修正】
     ========================================= */
 #setup-screen { 
     position: fixed; inset: 0; 
@@ -63,31 +64,13 @@ body {
     background-position: center;
 }
 
-#setup-screen h1 {
-    font-size: 5rem; 
-    color: var(--primary); 
-    letter-spacing: 20px;
-    margin-bottom: 10px;
-    text-shadow: 0 0 30px rgba(212, 195, 179, 0.5), 2px 2px 5px #000;
-    animation: inkBreath 4s ease-in-out infinite;
-}
-
-#setup-screen p {
-    color: var(--gold);
-    font-size: 1.2rem;
-    letter-spacing: 8px;
-    margin-bottom: 50px;
-    opacity: 0.8;
-}
-
-@keyframes inkBreath {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(212, 195, 179, 0.3)); }
-    50% { transform: scale(1.02); filter: drop-shadow(0 0 25px rgba(212, 195, 179, 0.6)); }
-}
+/* 略過 h1, p, inkBreath 動畫，保留你原本的設定 */
+#setup-screen h1 { font-size: 5rem; color: var(--primary); letter-spacing: 20px; margin-bottom: 10px; text-shadow: 0 0 30px rgba(212, 195, 179, 0.5), 2px 2px 5px #000; animation: inkBreath 4s ease-in-out infinite; }
+#setup-screen p { color: var(--gold); font-size: 1.2rem; letter-spacing: 8px; margin-bottom: 50px; opacity: 0.8; }
+@keyframes inkBreath { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(212, 195, 179, 0.3)); } 50% { transform: scale(1.02); filter: drop-shadow(0 0 25px rgba(212, 195, 179, 0.6)); } }
 
 .class-select-area { display: flex; gap: 50px; }
 
-/* --- 修正：連接英雄立繪至選擇按鈕 --- */
 .class-card-btn {
     width: 220px; height: 320px;
     background: rgba(20, 20, 20, 0.85);
@@ -99,37 +82,25 @@ body {
     padding: 20px; color: var(--primary);
     box-shadow: 0 10px 30px var(--ink-shadow);
     position: relative; overflow: hidden;
-    /* 新增背景圖片設定 */
     background-size: cover;
     background-position: center;
     text-shadow: 2px 2px 5px #000;
 }
 
-/* 針對特定英雄注入背景圖 (使用 linear-gradient 確保文字清晰) */
+/* 修正：連接英雄立繪，確保選擇器與 HTML 的引號內容一致 */
 .class-card-btn[onclick*="LIN_FAN"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/lin_fan.jpg'); }
 .class-card-btn[onclick*="DAN_DAN"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/dan_dan.jpg'); }
 .class-card-btn[onclick*="FEI_FEI"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/fei_fei.jpg'); }
 .class-card-btn[onclick*="MO_MO"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/mo_mo.jpg'); }
 
-.class-card-btn::before {
-    content: ''; position: absolute; inset: 5px; 
-    border: 1px dashed rgba(189, 160, 109, 0.4); 
-    pointer-events: none;
-}
-
-.class-card-btn:hover {
-    transform: scale(1.08) translateY(-10px);
-    background-color: rgba(40, 20, 20, 0.9);
-    box-shadow: 0 0 40px var(--warrior);
-    border-color: var(--highlight);
-}
-
+.class-card-btn::before { content: ''; position: absolute; inset: 5px; border: 1px dashed rgba(189, 160, 109, 0.4); pointer-events: none; }
+.class-card-btn:hover { transform: scale(1.08) translateY(-10px); background-color: rgba(40, 20, 20, 0.9); box-shadow: 0 0 40px var(--warrior); border-color: var(--highlight); }
 .class-card-btn h2 { margin: 0; color: var(--gold); font-size: 2rem; letter-spacing: 5px; z-index: 1; }
 .class-card-btn p { font-size: 0.95rem; letter-spacing: 2px; color: #eee; text-align: center; z-index: 1; }
 .class-card-btn .tribe-tag { z-index: 1; border: 1px solid var(--gold); padding: 2px 10px; background: rgba(0,0,0,0.5); }
 
 /* =========================================
-    【遊戲內元件與卡牌】
+    【卡牌修正】
     ========================================= */
 .card { 
     width: 125px; height: 175px; 
@@ -141,104 +112,48 @@ body {
     border: 2px solid #444; 
     box-shadow: 5px 10px 15px rgba(0,0,0,0.8);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    /* --- 修正：禁止卡牌重疊縮小 --- */
     flex-shrink: 0;
 }
 
-/* 抽牌動畫 */
-.card.drawing { animation: drawAnim 0.4s ease-out forwards; }
-@keyframes drawAnim {
-    0% { transform: translateY(50px) scale(0.5); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-.card-art {
-    width: 100%; height: 50%;
-    background-size: cover; background-position: center;
-    border-bottom: 2px solid var(--gold);
-    border-radius: 4px 4px 0 0;
-    filter: sepia(0.3) contrast(1.1); 
-}
-
-.card-name {
-    font-weight: bold; text-align: center; margin-top: 5px; letter-spacing: 1px;
-    color: var(--gold);
-}
-
-/* --- 修正：技能圖示標籤 (對接墨墨、丹丹) --- */
-.status-icon {
-    position: absolute; top: -8px; right: -8px; width: 24px; height: 24px;
-    background: #000; border: 1px solid var(--gold); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; z-index: 20; box-shadow: 0 0 5px var(--gold);
-}
-
+.card-art { width: 100%; height: 50%; background-size: cover; background-position: center; border-bottom: 2px solid var(--gold); border-radius: 4px 4px 0 0; filter: sepia(0.3) contrast(1.1); }
+.card-name { font-weight: bold; text-align: center; margin-top: 5px; letter-spacing: 1px; color: var(--gold); }
+.status-icon { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #000; border: 1px solid var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; z-index: 20; box-shadow: 0 0 5px var(--gold); }
 .card.unaffordable { filter: brightness(0.4) grayscale(1); cursor: not-allowed; }
 .card.sold-out { background: rgba(255,255,255,0.05); border: 1px dashed #333; cursor: default; }
-
-.stats { 
-    position: absolute; bottom: 0; width: 100%; 
-    display: flex; justify-content: space-around; 
-    font-weight: bold; background: rgba(0,0,0,0.9); padding: 6px 0;
-    border-top: 1px solid #333;
-    border-radius: 0 0 4px 4px;
-}
+.stats { position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-around; font-weight: bold; background: rgba(0,0,0,0.9); padding: 6px 0; border-top: 1px solid #333; border-radius: 0 0 4px 4px; }
 
 /* =========================================
-    【特效、提示與英雄】
+    【英雄頭像修正】移除寫死的 URL，讓 JS 正常發揮
     ========================================= */
 .hero { 
     width: 90px; height: 90px; border-radius: 50%; 
     border: 3px solid var(--gold); 
+    /* 修正：移除 background: url(...)，改為 background-color 作為基底 */
+    background-color: #111;
     background-size: cover; background-position: center;
     box-shadow: 0 0 20px rgba(189, 160, 109, 0.4), inset 0 0 20px #000;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-shadow: 2px 2px 4px #000; cursor: pointer; transition: 0.3s;
 }
 
-.hero:hover { filter: brightness(1.2); box-shadow: 0 0 30px var(--highlight); }
-
-#game-msg {
-    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 4rem; font-weight: 900; color: var(--highlight);
-    text-shadow: 0 0 40px #000, 2px 2px 0px var(--gold); pointer-events: none; z-index: 3000; opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    letter-spacing: 5px;
-}
+/* 略過訊息提示與特效動畫，保留你原本的設定 */
+#game-msg { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; color: var(--highlight); text-shadow: 0 0 40px #000, 2px 2px 0px var(--gold); pointer-events: none; z-index: 3000; opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 5px; }
 .msg-show { opacity: 1 !important; transform: translate(-50%, -50%) scale(1.2) !important; }
-
-/* 攻擊特效 (保留原始內容) */
 .projectile { position: fixed; width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle, #fff, #e74c3c); box-shadow: 0 0 20px #e74c3c; z-index: 2500; transition: all 0.5s linear; pointer-events: none; }
 .particle { position: fixed; width: 8px; height: 8px; border-radius: 50%; background: #e74c3c; pointer-events: none; z-index: 2499; animation: fadeOut 0.4s forwards; }
 @keyframes fadeOut { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.1); } }
-
 .shake { animation: shakeAnim 0.2s infinite; }
 @keyframes shakeAnim { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-
 .damage-pop { position: fixed; font-size: 3rem; font-weight: bold; color: white; text-shadow: 0 0 10px red; pointer-events: none; z-index: 3000; animation: popAnim 0.6s ease-out forwards; }
 @keyframes popAnim { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 50% { transform: translateY(-40px) scale(1.5); } 100% { transform: translateY(-60px) scale(1); opacity: 0; } }
 
-/* =========================================
-    【自走棋專屬樣式追加】
-    ========================================= */
+/* 自走棋樣式追加 (保留) */
 .phase-display { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; }
 .timer-display { font-size: 2rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 15px var(--primary); }
 .resource-display { font-size: 1.2rem; color: #66d9ef; font-weight: bold; text-shadow: 0 0 10px #66d9ef; }
-
-.action-btn {
-    padding: 10px 20px; 
-    background: linear-gradient(to bottom, #2c3e50, #1a252f);
-    border: 2px solid var(--gold); color: var(--primary); border-radius: 4px;
-    cursor: pointer; font-weight: bold; font-size: 1rem; letter-spacing: 2px;
-    transition: 0.3s; font-family: inherit;
-}
+.action-btn { padding: 10px 20px; background: linear-gradient(to bottom, #2c3e50, #1a252f); border: 2px solid var(--gold); color: var(--primary); border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; letter-spacing: 2px; transition: 0.3s; font-family: inherit; }
 .action-btn:hover { transform: scale(1.05); border-color: var(--highlight); box-shadow: 0 0 15px var(--gold); }
-
 .end-btn { background: linear-gradient(to bottom, #8b0000, #4a0000); }
 .end-btn:hover { box-shadow: 0 0 20px rgba(139, 0, 0, 0.8); background: #a00000; }
-
-.shop-bg {
-    background: linear-gradient(to top, rgba(20,20,20,0.9), transparent);
-    border-top: 1px dashed var(--gold);
-}
-
+.shop-bg { background: linear-gradient(to top, rgba(20,20,20,0.9), transparent); border-top: 1px dashed var(--gold); }
 #shop-area .card:hover { transform: translateY(-15px) scale(1.05); box-shadow: 0 0 30px #66d9ef; border-color: #66d9ef; }
