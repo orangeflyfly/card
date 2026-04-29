@@ -1,4 +1,4 @@
-/* style.css - 萬界裂痕：水墨奇幻大修版 (保留原始風格，僅修正佈局) */
+/* style.css - 萬界裂痕：水墨奇幻大修版 (保留原始風格，僅修正佈局與立繪連接) */
 
 :root { 
     --mage: #2c3e50; 
@@ -87,6 +87,7 @@ body {
 
 .class-select-area { display: flex; gap: 50px; }
 
+/* --- 修正：連接英雄立繪至選擇按鈕 --- */
 .class-card-btn {
     width: 220px; height: 320px;
     background: rgba(20, 20, 20, 0.85);
@@ -98,7 +99,17 @@ body {
     padding: 20px; color: var(--primary);
     box-shadow: 0 10px 30px var(--ink-shadow);
     position: relative; overflow: hidden;
+    /* 新增背景圖片設定 */
+    background-size: cover;
+    background-position: center;
+    text-shadow: 2px 2px 5px #000;
 }
+
+/* 針對特定英雄注入背景圖 (使用 linear-gradient 確保文字清晰) */
+.class-card-btn[onclick*="LIN_FAN"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/lin_fan.jpg'); }
+.class-card-btn[onclick*="DAN_DAN"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/dan_dan.jpg'); }
+.class-card-btn[onclick*="FEI_FEI"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/fei_fei.jpg'); }
+.class-card-btn[onclick*="MO_MO"] { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./assets/img/mo_mo.jpg'); }
 
 .class-card-btn::before {
     content: ''; position: absolute; inset: 5px; 
@@ -108,13 +119,14 @@ body {
 
 .class-card-btn:hover {
     transform: scale(1.08) translateY(-10px);
-    background: rgba(40, 20, 20, 0.9);
+    background-color: rgba(40, 20, 20, 0.9);
     box-shadow: 0 0 40px var(--warrior);
     border-color: var(--highlight);
 }
 
-.class-card-btn h2 { margin: 0; color: var(--gold); font-size: 2rem; letter-spacing: 5px; }
-.class-card-btn p { font-size: 0.95rem; letter-spacing: 2px; color: #aaa; text-align: center; }
+.class-card-btn h2 { margin: 0; color: var(--gold); font-size: 2rem; letter-spacing: 5px; z-index: 1; }
+.class-card-btn p { font-size: 0.95rem; letter-spacing: 2px; color: #eee; text-align: center; z-index: 1; }
+.class-card-btn .tribe-tag { z-index: 1; border: 1px solid var(--gold); padding: 2px 10px; background: rgba(0,0,0,0.5); }
 
 /* =========================================
     【遊戲內元件與卡牌】
@@ -178,7 +190,6 @@ body {
 .hero { 
     width: 90px; height: 90px; border-radius: 50%; 
     border: 3px solid var(--gold); 
-    background: url('https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=200&auto=format&fit=crop');
     background-size: cover; background-position: center;
     box-shadow: 0 0 20px rgba(189, 160, 109, 0.4), inset 0 0 20px #000;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
