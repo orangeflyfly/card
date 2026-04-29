@@ -1,36 +1,33 @@
-// database.js - 萬界裂痕 (The Omni Rift) 卡牌資料庫
+// database.js - 萬界戰場 (Auto Battler) 棋子資料庫
 // 融合東方水墨奇幻與現代戲劇性風格
 
-// 職業定義 (加上 export 匯出)
-export const CLASSES = {
-    MAGE: { name: "奧法師", heroPower: "奧術衝擊", powerCost: 2 },
-    WARRIOR: { name: "破陣者", heroPower: "武裝整修", powerCost: 2 }
+// 英雄定義 (原本的職業，現在變成開局可選的英雄，擁有不同被動技能)
+export const HEROES = {
+    MAGE: { id: 'h1', name: "萬界尋仙·林凡", skill: "靈力共鳴", description: "招募仙修時，隨機賦予友方仙修 +1/+1", hp: 30 },
+    WARRIOR: { id: 'h2', name: "劍影紅顏·丹丹", skill: "劍心通明", description: "戰鬥開始時，最左邊的友方單位獲得 +2 攻擊力", hp: 30 }
 };
 
-// 卡牌庫 (加上 export 匯出)
+// 萬界戰場棋子庫 (依星級區分，移除所有法術牌)
+// 屬性說明: cost 固定為招募費用, tribe 為種族標籤
 export const CARD_DB = {
-    MAGE: [
-        { id: 'm1', name: "見習法師", cost: 1, atk: 1, hp: 2, type: 'minion', art: "https://picsum.photos/id/1062/120/90" },
-        { id: 'm2', name: "奧術彈", cost: 1, atk: 3, hp: 0, type: "spell", art: "https://picsum.photos/id/102/120/90" }, 
-        { id: 'm3', name: "火球術", cost: 4, atk: 6, hp: 0, type: 'spell', art: "https://picsum.photos/id/674/120/90" },
-        { id: 'm4', name: "奧術巨人", cost: 8, atk: 8, hp: 8, type: "minion", art: "https://picsum.photos/id/177/120/90" },
-        // 專屬傳說卡
-        { id: 'm-legend', name: "萬界尋仙·林凡", cost: 6, atk: 5, hp: 5, type: 'minion', keyword: 'spell_damage', art: "https://picsum.photos/id/332/120/90", description: "法術傷害+2" }
+    // 一星棋子 (Tier 1) - 遊戲初期可招募
+    TIER_1: [
+        { id: 't1_1', name: "見習仙童", cost: 3, atk: 1, hp: 2, type: 'minion', tribe: '仙修', art: "https://picsum.photos/id/1062/120/90", description: "販賣時額外獲得 1 靈石" },
+        { id: 't1_2', name: "狂暴武者", cost: 3, atk: 2, hp: 1, type: 'minion', tribe: '凡人', art: "https://picsum.photos/id/292/120/90" },
+        { id: 't1_3', name: "迷途小妖", cost: 3, atk: 1, hp: 1, type: "minion", tribe: '妖獸', art: "https://picsum.photos/id/1011/120/90", description: "死亡時：召喚一個 1/1 的小妖" },
+        { id: 't1_4', name: "機關守衛", cost: 3, atk: 1, hp: 3, type: 'minion', tribe: '機關', keyword: 'taunt', art: "https://picsum.photos/id/1062/120/90", description: "嘲諷" }
     ],
-    WARRIOR: [
-        { id: 'w1', name: "狂暴老兵", cost: 3, atk: 2, hp: 4, type: 'minion', art: "https://picsum.photos/id/292/120/90" },
-        { id: 'w2', name: "重型斬擊", cost: 2, atk: 4, hp: 0, type: 'spell', art: "https://picsum.photos/id/447/120/90" },
-        { id: 'w3', name: "斬殺", cost: 1, atk: 4, hp: 0, type: "spell", art: "https://picsum.photos/id/982/120/90" },
-        { id: 'w4', name: "破陣先鋒", cost: 5, atk: 5, hp: 4, type: "minion", art: "https://picsum.photos/id/1059/120/90" },
-        // 專屬傳說卡
-        { id: 'w-legend', name: "劍影紅顏·丹丹", cost: 5, atk: 6, hp: 4, type: 'minion', keyword: 'charge', art: "https://picsum.photos/id/349/120/90", description: "衝鋒" }
+    
+    // 二星棋子 (Tier 2) - 遊戲中期可招募
+    TIER_2: [
+        { id: 't2_1', name: "破陣先鋒", cost: 3, atk: 3, hp: 4, type: "minion", tribe: '凡人', art: "https://picsum.photos/id/1059/120/90" },
+        { id: 't2_2', name: "雲遊探險家", cost: 3, atk: 3, hp: 3, type: "minion", tribe: '凡人', art: "https://picsum.photos/id/386/120/90", description: "戰吼：賦予一個友方單位 +1/+1" },
+        { id: 't2_3', name: "餐館小二", cost: 3, atk: 2, hp: 4, type: "minion", tribe: '仙修', keyword: 'heal_aura', art: "https://picsum.photos/id/493/120/90", description: "戰鬥開始：相鄰友軍生命 +2" } // 萬界餐館概念轉化
     ],
-    NEUTRAL: [
-        { id: 'n1', name: "守衛機器人", cost: 2, atk: 2, hp: 3, type: 'minion', keyword: 'taunt', art: "https://picsum.photos/id/1062/120/90", description: "嘲諷" },
-        { id: 'n2', name: "小卒", cost: 1, atk: 1, hp: 1, type: "minion", art: "https://picsum.photos/id/1011/120/90" }, 
-        { id: 'n3', name: "路人探險家", cost: 3, atk: 3, hp: 3, type: "minion", art: "https://picsum.photos/id/386/120/90" },
-        { id: 'n4', name: "遠古巨魔", cost: 7, atk: 7, hp: 7, type: "minion", art: "https://picsum.photos/id/652/120/90" },
-        // 特殊卡
-        { id: 'n-special', name: "萬界餐館", cost: 3, atk: 0, hp: 0, type: 'spell', keyword: 'heal', art: "https://picsum.photos/id/493/120/90", description: "穿越萬界，只為一頓熱飯" }
+
+    // 三星棋子 (Tier 3) - 遊戲中後期可招募
+    TIER_3: [
+        { id: 't3_1', name: "遠古巨魔", cost: 3, atk: 6, hp: 6, type: "minion", tribe: '妖獸', art: "https://picsum.photos/id/652/120/90" },
+        { id: 't3_2', name: "奧術石像", cost: 3, atk: 4, hp: 8, type: "minion", tribe: '機關', keyword: 'taunt', art: "https://picsum.photos/id/177/120/90", description: "嘲諷" }
     ]
 };
