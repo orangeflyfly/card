@@ -1,6 +1,6 @@
 // engine.js - 戰鬥與規則核心引擎
 
-class BattleEngine {
+export class BattleEngine {
     
     /**
      * 計算戰鬥結果 (修正了英雄不會反擊的邏輯)
