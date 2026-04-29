@@ -2,62 +2,65 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>萬界裂痕 - 水墨奇幻版</title>
+    <title>萬界戰場 - 水墨自走棋版</title>
     <!-- 連結外部樣式表 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- 1. 全域訊息提示容器 (用於顯示「你的回合」、「能量不足」等) -->
+<!-- 1. 全域訊息提示容器 -->
 <div id="game-msg"></div>
 
-<!-- 2. 職業選擇畫面 (對應 style.css 中的 #setup-screen) -->
+<!-- 2. 初始畫面 (之後可以改成選擇英雄技能) -->
 <div id="setup-screen">
-    <h1>萬界裂痕</h1>
-    <p>THE OMNI RIFT: INK & FANTASY</p>
+    <h1>萬界戰場</h1>
+    <p>THE OMNI RIFT: AUTO BATTLER</p>
     <div class="class-select-area">
         <div class="class-card-btn" onclick="startGame('MAGE')">
             <h2>奧法師</h2>
-            <p>掌控元素與遠程爆發</p>
+            <p>開局獲得額外法術傷害</p>
         </div>
         <div class="class-card-btn" onclick="startGame('WARRIOR')">
             <h2>破陣者</h2>
-            <p>近戰防禦與嗜血反擊</p>
+            <p>開局生物獲得額外生命</p>
         </div>
     </div>
 </div>
 
-<!-- 3. 遊戲主介面 (對應 style.css 中的 #game-ui) -->
+<!-- 3. 遊戲主介面 -->
 <div id="game-ui" style="display:none;">
     
-    <!-- 頂部資訊列：敵方狀態 -->
+    <!-- 頂部資訊列：階段與計時器 (自走棋核心) -->
     <div class="info-bar">
-        <div>敵方能量: ⚡ <span id="e-mana">1</span></div>
+        <div class="phase-display">當前階段: <span id="game-phase" style="color: var(--highlight);">招募準備</span></div>
         
-        <!-- 敵方英雄頭像 -->
-        <div class="hero" id="e-hero" onclick="handleSelect('E_HERO', this)">
-            <div style="font-size: 12px; opacity: 0.8;">敵方英雄</div>
+        <!-- 敵方英雄頭像 (戰鬥階段才會有動作) -->
+        <div class="hero" id="e-hero">
+            <div style="font-size: 12px; opacity: 0.8;">隨機強敵</div>
             <div style="font-size: 18px;">HP: <span id="e-hp">30</span></div>
         </div>
         
-        <!-- 敵方手牌計數 -->
-        <div>對手手牌: <span id="e-hand">3</span></div>
+        <!-- 倒數計時器 -->
+        <div class="timer-display">⏳ <span id="game-timer">20</span> 秒</div>
     </div>
     
-    <!-- 戰場區域：敵方生物 -->
+    <!-- 戰場區域：敵方陣型 -->
     <div id="enemy-board" class="battlefield">
-        <!-- 由 ui.js 動態渲染卡牌 -->
+        <!-- 準備階段為空，戰鬥階段由 ui.js 渲染 -->
     </div>
     
-    <!-- 戰場區域：我方生物 -->
+    <!-- 戰場區域：我方陣型 -->
     <div id="player-board" class="battlefield">
-        <!-- 由 ui.js 動態渲染卡牌 -->
+        <!-- 由 ui.js 動態渲染 -->
     </div>
 
-    <!-- 中部資訊列：玩家狀態 -->
+    <!-- 中部資訊列：玩家資源與操作 -->
     <div class="info-bar">
-        <!-- 玩家能量顯示 -->
-        <div>我的能量: ⚡ <span id="p-mana">1</span> / <span id="p-max">1</span></div>
+        <!-- 靈石 (金幣) 顯示 -->
+        <div class="resource-display">靈石: 💎 <span id="p-gold">3</span> / <span id="p-max-gold">3</span></div>
+        
+        <!-- 刷新招募區按鈕 -->
+        <button class="action-btn" id="refresh-btn" onclick="refreshShop()">刷新 (💎1)</button>
         
         <!-- 我方英雄頭像 -->
         <div class="hero" id="p-hero">
@@ -65,17 +68,17 @@
             <div style="font-size: 18px;">HP: <span id="p-hp">30</span></div>
         </div>
         
-        <!-- 結束回合按鈕 -->
-        <button id="end-btn" onclick="playerEndTurn()">結束回合</button>
+        <!-- 提早結束準備按鈕 -->
+        <button class="action-btn end-btn" id="ready-btn" onclick="forceStartCombat()">準備完成</button>
     </div>
 
-    <!-- 底部區域：玩家手牌 -->
-    <div id="hand-area" class="battlefield">
-        <!-- 由 ui.js 動態渲染卡牌 -->
+    <!-- 底部區域：招募區 (原本的手牌區) -->
+    <div id="shop-area" class="battlefield shop-bg">
+        <!-- 由 ui.js 動態渲染招募選項 -->
     </div>
 </div>
 
-<!-- 4. 引用現代化模組主程式 (加上 type="module") -->
+<!-- 4. 引用現代化模組主程式 -->
 <script type="module" src="main.js"></script>
 
 </body>
