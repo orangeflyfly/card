@@ -74,14 +74,14 @@ function buyCard(idx) {
     
     const card = game.shop[idx];
     
-    // 【重要修正】防止重複點擊或抓到空位
+    // 【重要修正】防止重複點擊或抓到空位，避免靈石白扣
     if (!card) return; 
     if (game.p.gold < 3) { showNotice("需 3 靈石！"); return; }
     if (game.p.board.length >= 7) { showNotice("戰場已滿！"); return; }
 
     game.p.gold -= 3;
     
-    // 【重要修正】使用 null 佔位而不是直接 splice，確保商店索引不位移
+    // 【重要修正】先取出物件再設為 null，確保 boughtCard 不會變成空
     const boughtCard = game.shop[idx];
     game.shop[idx] = null; 
 
@@ -126,7 +126,7 @@ async function startCombatPhase() {
     game.phase = 'COMBAT';
     if (game.timerInterval) clearInterval(game.timerInterval);
     
-    // 克隆副本，確保原件不消失
+    // 【核心邏輯】克隆副本，確保原始陣容不消失
     game.p.tempBoard = BattleEngine.cloneBoard(game.p.board);
     game.e.board = generateEnemyBoard();
     
@@ -142,8 +142,8 @@ async function startCombatPhase() {
     while (game.p.tempBoard.length > 0 && game.e.board.length > 0) {
         // 我方攻擊
         await performAttack(game.p.tempBoard, game.e.board, 'P');
-        render();
-        await new Promise(r => setTimeout(r, 800)); // 每次攻擊停頓 0.8 秒
+        render(); // 每一動都要渲染，才看得到扣血
+        await new Promise(r => setTimeout(r, 800)); // 停頓 0.8 秒增加觀賞性
 
         if (game.e.board.length === 0) break;
 
@@ -173,6 +173,7 @@ function startTimer() {
 function generateEnemyBoard() {
     const pool = CARD_DB.TIER_1;
     const count = Math.min(game.round, 5);
+    // 隨機生成敵方陣容
     return Array.from({length: count}, () => JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)])));
 }
 
@@ -181,9 +182,10 @@ async function performAttack(atkBoard, defBoard, side) {
     const target = BattleEngine.findAutoTarget(defBoard);
     if (target) {
         BattleEngine.calculateCombat(attacker, target);
+        // 檢查死亡並執行
         if (target.hp <= 0) BattleEngine.handleDeath(defBoard, defBoard.indexOf(target));
         if (attacker.hp <= 0) BattleEngine.handleDeath(atkBoard, 0);
-        else atkBoard.push(atkBoard.shift()); 
+        else atkBoard.push(atkBoard.shift()); // 未死則移至隊尾輪轉
     }
 }
 
@@ -201,7 +203,7 @@ function useHeroSkill(idx) {
 
 function render() { renderUI(game); }
 
-// 【核心修正】將所有 UI 會呼叫的函數掛載到 window
+// 【核心修正】將所有 UI 會呼叫的函數掛載到 window，確保 HTML 的 onclick 有效
 window.startGame = startGame;
 window.buyCard = buyCard;
 window.refreshShop = refreshShop;
