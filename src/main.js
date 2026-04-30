@@ -6,6 +6,7 @@ import { BattleEngine } from './core/engine.js';
 import { BondSystem } from './core/bonds.js';
 import { HERO_EFFECTS, BATTLECRY_EFFECTS } from './core/effects.js';
 import { showNotice, renderUI } from './ui/ui.js';
+import { createFX } from './ui/fx.js'; // 【新增：引入視覺特效模組】
 
 // 1. 初始化遊戲狀態 (修正：將戰場預設為 9 個格子的陣列)
 let game = {
@@ -21,6 +22,13 @@ let game = {
 
 // 輔助函式：判斷場上是否還有存活的棋子
 const hasAlive = (board) => board.some(c => c !== null && c.hp > 0);
+
+// 【新增：輔助函式】用來抓取畫面上的 DOM 元素，作為特效發射與受擊的目標
+function getCardDOM(side, index) {
+    const containerId = side === 'P' ? 'player-board' : 'enemy-board';
+    const container = document.getElementById(containerId);
+    return container ? container.children[index] : null;
+}
 
 // 2. 啟動遊戲
 function startGame(heroId) {
@@ -139,7 +147,7 @@ function checkTriples() {
     }
 }
 
-// --- 【新增：拖曳排陣核心邏輯】 ---
+// --- 【拖曳排陣核心邏輯】 ---
 function moveCard(fromIdx, toIdx) {
     if (game.phase !== 'PREP') return;
     if (fromIdx === toIdx) return; // 原地放下不處理
@@ -150,6 +158,23 @@ function moveCard(fromIdx, toIdx) {
     game.p.board[toIdx] = temp;
 
     // 重新渲染，讓畫面跟上陣列變化
+    render();
+}
+
+// --- 【新增：拖曳出售邏輯】 ---
+function sellCard(idx) {
+    if (game.phase !== 'PREP') return;
+    const card = game.p.board[idx];
+    if (!card) return;
+
+    // 取得該棋子的 DOM 以觸發爆金幣特效
+    const cardDOM = getCardDOM('P', idx);
+    if (cardDOM) createFX(cardDOM, cardDOM, 'sell');
+
+    game.p.board[idx] = null;
+    game.p.gold += 1; // 賣出獲得 1 靈石
+    showNotice(`出售 ${card.name}，退還 1 靈石`);
+    
     render();
 }
 
@@ -172,6 +197,16 @@ async function startCombatPhase() {
     // 觸發羈絆與開戰技能
     const activeBonds = BondSystem.getActiveBonds(game.p.tempBoard);
     BondSystem.applyBondBuffs(game.p.tempBoard, activeBonds);
+    
+    // 【核心修正】修復不死族羈絆 (開戰時隨機賦予一名不死族重生)
+    if (activeBonds.some(b => b.tribe === '不死')) {
+        const undeads = game.p.tempBoard.filter(m => m !== null && m.tribe === '不死');
+        if (undeads.length > 0) {
+            const randUndead = undeads[Math.floor(Math.random() * undeads.length)];
+            randUndead.hasReborn = true;
+        }
+    }
+
     BattleEngine.setupCombat(game.p.tempBoard, game.e.board, game.currentHero);
     
     render();
@@ -253,20 +288,54 @@ function generateEnemyBoard() {
     return newBoard;
 }
 
+// 【重製版：搭載視覺特效與死亡結算的戰鬥迴圈】
 async function performAttack(atkBoard, defBoard, attacker, side) {
-    // 【注意】BattleEngine.findAutoTarget 之後需要配合九宮格升級
     const target = BattleEngine.findAutoTarget(defBoard);
     if (target) {
+        // 取得陣列索引
+        const atkIdx = atkBoard.indexOf(attacker);
+        const defIdx = defBoard.indexOf(target);
+        
+        // 取得真實 DOM 元素 (為了播特效)
+        const atkDOM = getCardDOM(side, atkIdx);
+        const defDOM = getCardDOM(side === 'P' ? 'E' : 'P', defIdx);
+        
+        // 判斷該發射哪種特效 (可依據種族自訂)
+        let fxType = 'slash';
+        if (attacker.tribe === '仙修' || attacker.tribe === '靈體') fxType = 'spell';
+        if (attacker.tribe === '妖獸' || attacker.tribe === '不死') fxType = 'fire';
+        
+        // 1. 發射彈道與動畫
+        if (atkDOM && defDOM) {
+            createFX(atkDOM, defDOM, fxType);
+            await new Promise(r => setTimeout(r, 500)); // 等待彈道飛到目標身上
+        }
+
+        // 記錄戰鬥前的聖盾狀態
+        const defHadShield = target.hasShield;
+        const atkHadShield = attacker.hasShield;
+
+        // 2. 底層數值扣血結算
         BattleEngine.calculateCombat(attacker, target);
         
-        // 【防護鎖修正】檢查死亡並清空九宮格位置，避免 indexOf 找不到時的陣列污染
+        // 3. 觸發聖盾破碎特效
+        if (defHadShield && !target.hasShield && defDOM) createFX(defDOM, defDOM, 'shield_break');
+        if (atkHadShield && !attacker.hasShield && atkDOM) createFX(atkDOM, atkDOM, 'shield_break');
+
+        // 4. 【完美修復：生死結算】呼叫 engine.js 處理重生與亡語
         if (target.hp <= 0) {
-            const targetIdx = defBoard.indexOf(target);
-            if (targetIdx !== -1) defBoard[targetIdx] = null;
+            const revived = BattleEngine.handleDeath(defBoard, defIdx);
+            if (revived && defDOM) {
+                createFX(defDOM, defDOM, 'reborn'); // 觸發重生特效
+                await new Promise(r => setTimeout(r, 400));
+            }
         }
         if (attacker.hp <= 0) {
-            const atkIdx = atkBoard.indexOf(attacker);
-            if (atkIdx !== -1) atkBoard[atkIdx] = null;
+            const revived = BattleEngine.handleDeath(atkBoard, atkIdx);
+            if (revived && atkDOM) {
+                createFX(atkDOM, atkDOM, 'reborn');
+                await new Promise(r => setTimeout(r, 400));
+            }
         }
     }
 }
@@ -285,10 +354,11 @@ function useHeroSkill(idx) {
 
 function render() { renderUI(game); }
 
-// 【核心修正】將所有 UI 會呼叫的函數掛載到 window，確保 HTML 的 onclick 有效
+// 將所有 UI 會呼叫的函數掛載到 window，確保 HTML 的 onclick 與拖曳有效
 window.startGame = startGame;
 window.buyCard = buyCard;
 window.refreshShop = refreshShop;
 window.useHeroSkill = useHeroSkill;
 window.forceStartCombat = forceStartCombat;
-window.moveCard = moveCard; // 【新增】暴露給 UI 呼叫
+window.moveCard = moveCard; 
+window.sellCard = sellCard; // 【新增】暴露給 UI 呼叫出售機制
