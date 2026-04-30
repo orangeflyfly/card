@@ -7,10 +7,10 @@ import { BondSystem } from './core/bonds.js';
 import { HERO_EFFECTS, BATTLECRY_EFFECTS } from './core/effects.js';
 import { showNotice, renderUI } from './ui/ui.js';
 
-// 1. 初始化遊戲狀態
+// 1. 初始化遊戲狀態 (修正：將戰場預設為 9 個格子的陣列)
 let game = {
-    p: { hp: 30, gold: 3, maxGold: 3, board: [] },
-    e: { hp: 30, board: [] },
+    p: { hp: 30, gold: 3, maxGold: 3, board: Array(9).fill(null) },
+    e: { hp: 30, board: Array(9).fill(null) },
     shop: [],
     timer: 20,
     round: 0, // 改從 0 開始，第一局 startPrepPhase 會變 1
@@ -19,10 +19,16 @@ let game = {
     timerInterval: null
 };
 
+// 輔助函式：判斷場上是否還有存活的棋子
+const hasAlive = (board) => board.some(c => c !== null && c.hp > 0);
+
 // 2. 啟動遊戲
 function startGame(heroId) {
     game.currentHero = HEROES[heroId];
     game.p.hp = game.currentHero.hp;
+    // 確保每次重新開始都是乾淨的九宮格
+    game.p.board = Array(9).fill(null);
+    game.e.board = Array(9).fill(null);
     
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('game-ui').style.display = 'grid';
@@ -77,11 +83,14 @@ function buyCard(idx) {
     // 【重要修正】防止重複點擊或抓到空位，避免靈石白扣
     if (!card) return; 
     if (game.p.gold < 3) { showNotice("需 3 靈石！"); return; }
-    if (game.p.board.length >= 7) { showNotice("戰場已滿！"); return; }
+    
+    // 【核心修正】尋找九宮格的第一個空位
+    const emptyIdx = game.p.board.findIndex(c => c === null);
+    if (emptyIdx === -1) { showNotice("戰場九宮格已滿！"); return; }
 
     game.p.gold -= 3;
     
-    // 【重要修正】先取出物件再設為 null，確保 boughtCard 不會變成空
+    // 取出物件再設為 null，確保 boughtCard 不會變成空
     const boughtCard = game.shop[idx];
     game.shop[idx] = null; 
 
@@ -90,26 +99,42 @@ function buyCard(idx) {
         BATTLECRY_EFFECTS[boughtCard.effectTag](boughtCard, game.p.board, game);
     }
 
-    game.p.board.push(boughtCard);
+    // 【核心修正】把卡片放到指定的空位，而非推入陣列末端
+    game.p.board[emptyIdx] = boughtCard;
     checkTriples(); 
     render(); // 立即重新渲染，確保畫面上卡片消失
 }
 
 function checkTriples() {
     const counts = {};
-    game.p.board.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+    // 計算時忽略 null 
+    game.p.board.forEach(c => { if (c) counts[c.id] = (counts[c.id] || 0) + 1; });
     
     for (const id in counts) {
         if (counts[id] >= 3) {
             showNotice("✨ 三連合成！");
-            const survivors = game.p.board.filter(c => c.id === id);
-            game.p.board = game.p.board.filter(c => c.id !== id);
+            let firstIdx = -1;
+            let found = 0;
+            let golden = null;
             
-            const golden = survivors[0];
+            // 掃描九宮格，合成金卡並清空額外的格子
+            for (let i = 0; i < 9; i++) {
+                if (game.p.board[i] && game.p.board[i].id === id) {
+                    if (firstIdx === -1) {
+                        firstIdx = i;
+                        golden = game.p.board[i]; // 保留第一隻
+                        found++;
+                    } else if (found < 3) {
+                        game.p.board[i] = null; // 將第二、第三隻的位置清空
+                        found++;
+                    }
+                }
+            }
+            
             golden.atk *= 2;
             golden.hp *= 2;
             golden.isGolden = true; 
-            game.p.board.push(golden);
+            // golden 已經在 game.p.board[firstIdx] 裡了，所以不用 push
         }
     }
 }
@@ -138,23 +163,55 @@ async function startCombatPhase() {
     render();
     await new Promise(r => setTimeout(r, 1200)); // 開戰前停頓，讓玩家看清楚對手
 
-    // 自動戰鬥循環
-    while (game.p.tempBoard.length > 0 && game.e.board.length > 0) {
-        // 我方攻擊
-        await performAttack(game.p.tempBoard, game.e.board, 'P');
-        render(); // 每一動都要渲染，才看得到扣血
-        await new Promise(r => setTimeout(r, 800)); // 停頓 0.8 秒增加觀賞性
+    // 用來記錄當前攻擊輪到九宮格的哪一個位子 (0~8)
+    let pTurnIdx = 0;
+    let eTurnIdx = 0;
 
-        if (game.e.board.length === 0) break;
+    // 自動戰鬥循環 (當雙方都有活人時繼續)
+    while (hasAlive(game.p.tempBoard) && hasAlive(game.e.board)) {
+        
+        // --- 我方攻擊階段 ---
+        let pAttacker = null;
+        let pStartScan = pTurnIdx;
+        // 尋找下一個活著的攻擊者
+        do {
+            if (game.p.tempBoard[pTurnIdx] && game.p.tempBoard[pTurnIdx].hp > 0) {
+                pAttacker = game.p.tempBoard[pTurnIdx];
+            }
+            pTurnIdx = (pTurnIdx + 1) % 9;
+        } while (!pAttacker && pTurnIdx !== pStartScan);
 
-        // 敵方攻擊
-        await performAttack(game.e.board, game.p.tempBoard, 'E');
-        render();
-        await new Promise(r => setTimeout(r, 800));
+        if (pAttacker) {
+            await performAttack(game.p.tempBoard, game.e.board, pAttacker, 'P');
+            render(); // 每一動都要渲染，才看得到扣血
+            await new Promise(r => setTimeout(r, 800)); // 停頓 0.8 秒增加觀賞性
+        }
+
+        if (!hasAlive(game.e.board)) break;
+
+        // --- 敵方攻擊階段 ---
+        let eAttacker = null;
+        let eStartScan = eTurnIdx;
+        do {
+            if (game.e.board[eTurnIdx] && game.e.board[eTurnIdx].hp > 0) {
+                eAttacker = game.e.board[eTurnIdx];
+            }
+            eTurnIdx = (eTurnIdx + 1) % 9;
+        } while (!eAttacker && eTurnIdx !== eStartScan);
+
+        if (eAttacker) {
+            await performAttack(game.e.board, game.p.tempBoard, eAttacker, 'E');
+            render();
+            await new Promise(r => setTimeout(r, 800));
+        }
     }
 
-    const win = game.e.board.length === 0;
-    if (!win) { game.p.hp -= (game.e.board.length + 2); }
+    const win = !hasAlive(game.e.board);
+    if (!win) { 
+        // 扣除存活敵人數量的血量
+        const survivedCount = game.e.board.filter(c => c && c.hp > 0).length;
+        game.p.hp -= (survivedCount + 2); 
+    }
     showNotice(win ? "勝利！" : "戰敗！");
     
     setTimeout(startPrepPhase, 2000);
@@ -172,20 +229,31 @@ function startTimer() {
 
 function generateEnemyBoard() {
     const pool = CARD_DB.TIER_1;
-    const count = Math.min(game.round, 5);
-    // 隨機生成敵方陣容
-    return Array.from({length: count}, () => JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)])));
+    const count = Math.min(game.round, 9); // 最多 9 個敵人
+    let newBoard = Array(9).fill(null);
+    
+    for(let i = 0; i < count; i++) {
+        // 暫時按順序塞入格子，未來可做隨機陣型
+        newBoard[i] = JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)]));
+    }
+    return newBoard;
 }
 
-async function performAttack(atkBoard, defBoard, side) {
-    const attacker = atkBoard[0];
+async function performAttack(atkBoard, defBoard, attacker, side) {
+    // 【注意】BattleEngine.findAutoTarget 之後需要配合九宮格升級
     const target = BattleEngine.findAutoTarget(defBoard);
     if (target) {
         BattleEngine.calculateCombat(attacker, target);
-        // 檢查死亡並執行
-        if (target.hp <= 0) BattleEngine.handleDeath(defBoard, defBoard.indexOf(target));
-        if (attacker.hp <= 0) BattleEngine.handleDeath(atkBoard, 0);
-        else atkBoard.push(atkBoard.shift()); // 未死則移至隊尾輪轉
+        
+        // 檢查死亡並清空九宮格位置 (取代原本會縮短陣列的 splice)
+        if (target.hp <= 0) {
+            const targetIdx = defBoard.indexOf(target);
+            defBoard[targetIdx] = null;
+        }
+        if (attacker.hp <= 0) {
+            const atkIdx = atkBoard.indexOf(attacker);
+            atkBoard[atkIdx] = null;
+        }
     }
 }
 
