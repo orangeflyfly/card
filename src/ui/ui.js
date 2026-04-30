@@ -70,6 +70,26 @@ function renderArea(id, data, type, game) {
                 const emptyGrid = document.createElement('div');
                 emptyGrid.className = 'card empty-slot';
                 emptyGrid.dataset.index = i; // 紀錄這是第幾個格子，為之後拖曳排陣做準備
+                
+                // 【新增：拖曳排陣 - 讓空位可以被放上卡片】
+                if (type === 'PLAYER_BOARD' && game.phase === 'PREP') {
+                    emptyGrid.ondragover = (e) => { 
+                        e.preventDefault(); // 必須阻止預設行為，才能允許 drop
+                        emptyGrid.style.borderColor = 'var(--highlight)'; // 視覺提示
+                    };
+                    emptyGrid.ondragleave = (e) => { 
+                        emptyGrid.style.borderColor = ''; 
+                    };
+                    emptyGrid.ondrop = (e) => {
+                        e.preventDefault();
+                        emptyGrid.style.borderColor = '';
+                        const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                        if (!isNaN(fromIdx) && window.moveCard) {
+                            window.moveCard(fromIdx, i);
+                        }
+                    };
+                }
+                
                 el.appendChild(emptyGrid);
             }
             return;
@@ -81,6 +101,37 @@ function renderArea(id, data, type, game) {
         div.className = `card ${isUnaffordable ? 'unaffordable' : ''} ${c.isGolden ? 'golden' : ''}`;
         div.dataset.index = i; // 紀錄位置
         
+        // 【新增：拖曳排陣 - 讓戰場上的棋子可以被抓起來，也可以被其他棋子替換】
+        if (type === 'PLAYER_BOARD' && game.phase === 'PREP') {
+            div.draggable = true; // 開啟拖曳功能
+            
+            // 開始拖曳，記錄這是第幾個位置的卡
+            div.ondragstart = (e) => {
+                e.dataTransfer.setData('text/plain', i);
+                setTimeout(() => div.style.opacity = '0.5', 0); // 拖曳時原位變半透明
+            };
+            div.ondragend = () => {
+                div.style.opacity = '1';
+            };
+            
+            // 允許其他棋子拖到自己身上 (交換位置)
+            div.ondragover = (e) => { 
+                e.preventDefault(); 
+                div.style.boxShadow = '0 0 20px var(--highlight)';
+            };
+            div.ondragleave = (e) => { 
+                div.style.boxShadow = ''; 
+            };
+            div.ondrop = (e) => {
+                e.preventDefault();
+                div.style.boxShadow = '';
+                const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                if (!isNaN(fromIdx) && fromIdx !== i && window.moveCard) {
+                    window.moveCard(fromIdx, i);
+                }
+            };
+        }
+
         // 根據關鍵字顯示小圖示 (聖盾、重生、嘲諷)
         let statusIcons = '';
         if (c.hasShield) statusIcons += `<div class="status-icon shield" title="聖盾">🛡️</div>`;
