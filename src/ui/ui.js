@@ -35,8 +35,9 @@ export function renderUI(game) {
         pHeroEl.style.backgroundPosition = 'center';
     }
 
-    // 2. 渲染種族羈絆區
-    renderBonds(game.p.board);
+    // 2. 渲染種族羈絆區 (修正：過濾掉九宮格裡的 null 空位)
+    const aliveCards = game.p.board.filter(c => c !== null);
+    renderBonds(aliveCards);
 
     // 3. 渲染商店 (招募區)
     renderArea('shop-area', game.shop, 'SHOP', game);
@@ -57,13 +58,19 @@ function renderArea(id, data, type, game) {
     el.innerHTML = '';
 
     data.forEach((c, i) => {
-        // --- 修正點 1：處理空位 (當卡片被買走時) ---
+        // --- 修正點 1：處理空位 (當卡片被買走，或是九宮格的空位) ---
         if (!c) {
             if (type === 'SHOP') {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'card sold-out';
                 emptyDiv.innerHTML = `<div style="margin-top:50px; color:#444;">已售出</div>`;
                 el.appendChild(emptyDiv);
+            } else if (type === 'PLAYER_BOARD' || type === 'ENEMY_BOARD') {
+                // 【核心修正】戰場上的空位必須渲染出來，撐起 3x3 九宮格
+                const emptyGrid = document.createElement('div');
+                emptyGrid.className = 'card empty-slot';
+                emptyGrid.dataset.index = i; // 紀錄這是第幾個格子，為之後拖曳排陣做準備
+                el.appendChild(emptyGrid);
             }
             return;
         }
@@ -72,6 +79,7 @@ function renderArea(id, data, type, game) {
         // 判斷是否買得起
         const isUnaffordable = type === 'SHOP' && game.p.gold < (c.cost || 3);
         div.className = `card ${isUnaffordable ? 'unaffordable' : ''} ${c.isGolden ? 'golden' : ''}`;
+        div.dataset.index = i; // 紀錄位置
         
         // 根據關鍵字顯示小圖示 (聖盾、重生、嘲諷)
         let statusIcons = '';
