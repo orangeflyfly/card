@@ -21,7 +21,9 @@ export const HEROES = {
         description: "戰鬥開始時，讓最左邊的棋子獲得「聖盾」。",
         // --- 注入立繪路徑 ---
         art: './assets/img/dan_dan.jpg', 
-        effectTag: 'A_HERO_SHIELD_LEFT'
+        effectTag: 'A_HERO_SHIELD_LEFT',
+        // 【防錯修正】：配合 engine.js 的戰鬥開局技能讀取
+        onCombatEffect: 'A_HERO_SHIELD_LEFT' 
     },
     'FEI_FEI': {
         id: 'FEI_FEI',
