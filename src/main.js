@@ -139,6 +139,20 @@ function checkTriples() {
     }
 }
 
+// --- 【新增：拖曳排陣核心邏輯】 ---
+function moveCard(fromIdx, toIdx) {
+    if (game.phase !== 'PREP') return;
+    if (fromIdx === toIdx) return; // 原地放下不處理
+
+    // 陣列元素交換 (Swap)
+    const temp = game.p.board[fromIdx];
+    game.p.board[fromIdx] = game.p.board[toIdx];
+    game.p.board[toIdx] = temp;
+
+    // 重新渲染，讓畫面跟上陣列變化
+    render();
+}
+
 // 5. 準備完成按鈕
 function forceStartCombat() {
     if (game.phase !== 'PREP') return;
@@ -277,3 +291,4 @@ window.buyCard = buyCard;
 window.refreshShop = refreshShop;
 window.useHeroSkill = useHeroSkill;
 window.forceStartCombat = forceStartCombat;
+window.moveCard = moveCard; // 【新增】暴露給 UI 呼叫
