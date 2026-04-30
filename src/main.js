@@ -245,14 +245,14 @@ async function performAttack(atkBoard, defBoard, attacker, side) {
     if (target) {
         BattleEngine.calculateCombat(attacker, target);
         
-        // 檢查死亡並清空九宮格位置 (取代原本會縮短陣列的 splice)
+        // 【防護鎖修正】檢查死亡並清空九宮格位置，避免 indexOf 找不到時的陣列污染
         if (target.hp <= 0) {
             const targetIdx = defBoard.indexOf(target);
-            defBoard[targetIdx] = null;
+            if (targetIdx !== -1) defBoard[targetIdx] = null;
         }
         if (attacker.hp <= 0) {
             const atkIdx = atkBoard.indexOf(attacker);
-            atkBoard[atkIdx] = null;
+            if (atkIdx !== -1) atkBoard[atkIdx] = null;
         }
     }
 }
