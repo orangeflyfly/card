@@ -46,9 +46,9 @@ export class BondSystem {
         const counts = {};
         const activeEffects = [];
 
-        // 1. 統計各類別數量 (通常自走棋會要求「不同名」的棋子才算，這裡先簡化為算總數)
+        // 1. 統計各類別數量 (【防禦修正】：加入 minion !== null 判斷)
         board.forEach(minion => {
-            if (minion.tribe) {
+            if (minion && minion.tribe) {
                 counts[minion.tribe] = (counts[minion.tribe] || 0) + 1;
             }
         });
@@ -77,10 +77,12 @@ export class BondSystem {
     static applyBondBuffs(board, activeBonds) {
         activeBonds.forEach(bond => {
             if (bond.type === 'ATK_BUFF') {
-                board.filter(m => m.tribe === bond.tribe).forEach(m => m.atk += bond.value);
+                // 【防禦修正】：先過濾掉 null
+                board.filter(m => m !== null && m.tribe === bond.tribe).forEach(m => m.atk += bond.value);
             }
             if (bond.type === 'HP_BUFF') {
-                board.filter(m => m.tribe === bond.tribe).forEach(m => m.hp += bond.value);
+                // 【防禦修正】：先過濾掉 null
+                board.filter(m => m !== null && m.tribe === bond.tribe).forEach(m => m.hp += bond.value);
             }
             // 其他特殊效果 (如重生) 需在 engine.js 的 setupCombat 中額外處理
         });
