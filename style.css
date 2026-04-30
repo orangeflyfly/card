@@ -1,4 +1,4 @@
-/* style.css - 萬界裂痕：九宮格大改版與佈局優化 */
+/* style.css - 萬界裂痕：左右對抗佈局與九宮格優化 */
 
 :root { 
     --mage: #2c3e50; 
@@ -21,17 +21,62 @@ body {
 }
 
 /* =========================================
-    【核心 UI 容器】高度重新分配，確保裝得下兩組九宮格
+    【核心 UI 容器】全新 4 層架構，將最大空間留給左右競技場
     ========================================= */
 #game-ui { 
     display: grid; 
-    /* 修正：稍微壓縮上下 info-bar 的空間，把最大空間讓給戰場 */
-    grid-template-rows: 70px minmax(220px, 1fr) minmax(220px, 1fr) 70px 180px; 
+    grid-template-rows: 60px 1fr 60px 180px; /* 頂端列、競技場、操作列、商店 */
     height: 100vh; 
     box-sizing: border-box;
 }
 
-/* --- 核心大改版：戰場升級為 3x3 九宮格 --- */
+/* --- 新增：核心競技場 (左右對抗佈局) --- */
+.arena-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px; /* 敵我雙方與 VS 之間的間距 */
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* 加入微弱的光暈背景，聚焦戰鬥中心 */
+    background: radial-gradient(circle at center, rgba(189, 160, 109, 0.05) 0%, transparent 60%);
+}
+
+/* 敵我雙方的專屬區塊 */
+.player-side, .enemy-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    border: 1px solid #333;
+    box-shadow: 0 10px 30px var(--ink-shadow);
+}
+
+/* 陣營色彩區分 */
+.player-side { border-bottom: 3px solid #3498db; }
+.enemy-side { border-bottom: 3px solid var(--warrior); }
+
+/* VS 視覺特效 */
+.vs-divider {
+    font-size: 3.5rem;
+    font-weight: 900;
+    font-style: italic;
+    color: var(--highlight);
+    text-shadow: 0 0 20px #000, 0 0 15px var(--gold);
+    letter-spacing: 5px;
+    animation: pulseVS 2s infinite;
+    user-select: none;
+}
+@keyframes pulseVS {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(231, 76, 60, 0.3)); }
+    50% { transform: scale(1.1); filter: drop-shadow(0 0 20px rgba(231, 76, 60, 0.8)); }
+}
+
+/* --- 戰場 (九宮格) 本體 --- */
 .battlefield { 
     display: grid; 
     /* 定義 3 列與 3 行 */
@@ -41,10 +86,13 @@ body {
     justify-content: center; 
     align-content: center;
     position: relative; 
-    box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
-    padding: 10px 20px;
+    background: rgba(20, 20, 20, 0.5); /* 給九宮格一個淡淡的地墊感 */
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
 }
 
+/* 頂部與底部資訊列 */
 .info-bar { 
     display: flex; align-items: center; justify-content: space-around; 
     background: rgba(15, 15, 15, 0.95); 
@@ -133,7 +181,7 @@ body {
 .battlefield .status-icon { width: 18px; height: 18px; font-size: 10px; top: -5px; right: -5px; }
 .battlefield .cost { display: none; /* 卡牌上場後不需要顯示購買價格 */ }
 
-/* --- 新增：九宮格專屬空位樣式 (水墨虛線框) --- */
+/* --- 九宮格專屬空位樣式 (水墨虛線框) --- */
 .empty-slot {
     background: rgba(20, 20, 20, 0.3) !important;
     border: 2px dashed rgba(189, 160, 109, 0.3) !important;
@@ -160,6 +208,8 @@ body {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-shadow: 2px 2px 4px #000; cursor: pointer; transition: 0.3s;
 }
+.hero-label { font-size: 10px; background: rgba(0,0,0,0.7); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--gold); margin-bottom: 2px;}
+.hero-hp { font-weight: bold; font-size: 14px; background: rgba(0,0,0,0.7); padding: 2px 5px; border-radius: 4px; }
 
 /* 訊息提示與特效動畫 */
 #game-msg { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: 900; color: var(--highlight); text-shadow: 0 0 40px #000, 2px 2px 0px var(--gold); pointer-events: none; z-index: 3000; opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); letter-spacing: 5px; }
@@ -194,5 +244,4 @@ body {
     gap: 20px;
     height: 100%;
 }
-
 #shop-area .card:hover { transform: translateY(-15px) scale(1.05); box-shadow: 0 0 30px #66d9ef; border-color: #66d9ef; }
