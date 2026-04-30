@@ -10,6 +10,12 @@
 <!-- 1. 全域訊息提示容器 -->
 <div id="game-msg"></div>
 
+<!-- 【Bug 1 核心修正】：左側羈絆顯示區。必須移出 game-ui 網格，並補上漂浮定位，才不會破壞九宮格版面 -->
+<div id="bond-area" style="position:fixed; left:10px; top:150px; width:140px; background:rgba(0,0,0,0.85); padding:10px; border:1px solid #bda06d; font-size:12px; z-index:1000; color:white; border-radius:5px;">
+    <h4>啟動羈絆</h4>
+    <div style="font-size:12px; color:#666;">暫無羈絆</div>
+</div>
+
 <!-- 2. 初始畫面：選擇英雄 -->
 <div id="setup-screen">
     <h1 class="ink-title">萬界戰場</h1>
@@ -41,12 +47,6 @@
 
 <!-- 3. 遊戲主介面 -->
 <div id="game-ui" style="display:none;">
-    
-    <!-- 左側：羈絆顯示區 (新增) -->
-    <div id="bond-area">
-        <h4>啟動羈絆</h4>
-        <div style="font-size:12px; color:#666;">暫無羈絆</div>
-    </div>
     
     <!-- 頂部資訊列 -->
     <div class="info-bar">
