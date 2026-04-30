@@ -17,7 +17,8 @@ export class BattleEngine {
      * 優先尋找帶有「TAUNT (嘲諷)」標籤的敵人。
      */
     static findAutoTarget(enemyBoard) {
-        const aliveEnemies = enemyBoard.filter(m => m.hp > 0);
+        // 【Bug 3 核心修正 1】：過濾目標時，必須先排除 null (空位)，再判斷血量！
+        const aliveEnemies = enemyBoard.filter(m => m !== null && m.hp > 0);
         if (aliveEnemies.length === 0) return null;
 
         const taunts = aliveEnemies.filter(m => m.keyword === 'TAUNT');
@@ -51,6 +52,7 @@ export class BattleEngine {
      */
     static handleDeath(board, index) {
         const deadMinion = board[index];
+        if (!deadMinion) return false; // 安全防護，避免對空位操作
         
         // --- 觸發亡語 (B區) ---
         if (deadMinion.effectTag && deadMinion.effectTag.startsWith('B')) {
@@ -65,7 +67,8 @@ export class BattleEngine {
             return true; // 代表棋子復活了
         }
 
-        board.splice(index, 1); // 真正移除棋子
+        // 【Bug 3 核心修正 2】：九宮格絕對不能用 splice！改為將該位置清空為 null
+        board[index] = null; 
         return false;
     }
 
