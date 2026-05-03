@@ -9,7 +9,7 @@ const ALL_CARDS = [
     // --- 一星棋子 (Tier 1) ---
     { id: 'h1', name: "見習武者", tier: 1, atk: 2, hp: 1, tribe: "凡人", cost: 3 },
     { id: 'i1', name: "見習仙童", tier: 1, atk: 1, hp: 2, tribe: "仙修", cost: 3, effectTag: 'A3_GENERATE_GOLD' }, // 戰吼賺錢
-    { id: 'b1', name: "小狐妖", tier: 1, tier: 1, atk: 1, hp: 1, tribe: "妖獸", cost: 3, effectTag: 'B1_SUMMON_TOKEN' }, // 亡語召喚
+    { id: 'b1', name: "小狐妖", tier: 1, atk: 1, hp: 1, tribe: "妖獸", cost: 3, effectTag: 'B1_SUMMON_TOKEN' }, // 亡語召喚
     { id: 'm1', name: "機關木人", tier: 1, atk: 1, hp: 3, tribe: "機關", cost: 3, keyword: 'TAUNT' }, // 嘲諷
     { id: 'u1', name: "復甦小鬼", tier: 1, atk: 2, hp: 1, tribe: "不死", cost: 3 },
 
