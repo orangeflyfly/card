@@ -7,7 +7,8 @@ export const BATTLECRY_EFFECTS = {
         // 賦予同種族友軍 +1/+1 (修正：加入 m 存在判定，跳過 null)
         board.forEach(m => { if(m && m.tribe === target.tribe) { m.atk += 1; m.hp += 1; } });
     },
-    'A3_GENERATE_GOLD': (target, game) => { game.p.gold += 1; } // 賺 1 靈石
+    // 【Bug 修正】：第三個參數才是 game，第二個是 board
+    'A3_GENERATE_GOLD': (target, board, game) => { game.p.gold += 1; } // 賺 1 靈石
 };
 
 // --- B區：亡語效果 (戰鬥中死亡時觸發) ---
