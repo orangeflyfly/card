@@ -17,7 +17,8 @@ let game = {
     round: 0, // 改從 0 開始，第一局 startPrepPhase 會變 1
     phase: 'PREP', 
     currentHero: null,
-    timerInterval: null
+    timerInterval: null,
+    combatLock: false // 【Bug 修正】防止計時器與按鈕同時觸發兩次戰鬥
 };
 
 // 輔助函式：判斷場上是否還有存活的棋子
@@ -34,9 +35,12 @@ function getCardDOM(side, index) {
 function startGame(heroId) {
     game.currentHero = HEROES[heroId];
     game.p.hp = game.currentHero.hp;
+    game.e.hp = 30; // 重置敵方血量
     // 確保每次重新開始都是乾淨的九宮格
     game.p.board = Array(9).fill(null);
     game.e.board = Array(9).fill(null);
+    game.round = 0;
+    game.combatLock = false;
     
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('game-ui').style.display = 'grid';
@@ -49,7 +53,8 @@ function startPrepPhase() {
     game.phase = 'PREP';
     game.timer = 20;
     game.round++;
-    
+    game.combatLock = false; // 【Bug 修正】每次準備階段重置鎖
+
     // 靈石成長
     game.p.maxGold = Math.min(game.round + 2, 10);
     game.p.gold = game.p.maxGold;
@@ -172,8 +177,10 @@ function sellCard(idx) {
     if (cardDOM) createFX(cardDOM, cardDOM, 'sell');
 
     game.p.board[idx] = null;
-    game.p.gold += 1; // 賣出獲得 1 靈石
-    showNotice(`出售 ${card.name}，退還 1 靈石`);
+    // 【修正】金卡退還 2 靈石，普通卡退還 1 靈石
+    const refund = card.isGolden ? 2 : 1;
+    game.p.gold += refund;
+    showNotice(`出售 ${card.name}，退還 ${refund} 靈石`);
     
     render();
 }
@@ -181,12 +188,18 @@ function sellCard(idx) {
 // 5. 準備完成按鈕
 function forceStartCombat() {
     if (game.phase !== 'PREP') return;
+    // 【Bug 修正】防止雙重觸發
+    if (game.combatLock) return;
     showNotice("⚡ 準備完成，開戰！");
     startCombatPhase();
 }
 
 // 6. 戰鬥邏輯 (加入延遲，讓過程清晰)
 async function startCombatPhase() {
+    // 【Bug 修正】上鎖，防止計時器與按鈕同時觸發
+    if (game.combatLock) return;
+    game.combatLock = true;
+
     game.phase = 'COMBAT';
     if (game.timerInterval) clearInterval(game.timerInterval);
     
@@ -256,12 +269,28 @@ async function startCombatPhase() {
     }
 
     const win = !hasAlive(game.e.board);
-    if (!win) { 
-        // 扣除存活敵人數量的血量
+    if (win) {
+        // 【修正】勝利時扣敵方血：固定 2 點 + 玩家存活棋子數
+        const survivedCount = game.p.tempBoard.filter(c => c && c.hp > 0).length;
+        game.e.hp -= (2 + survivedCount);
+        showNotice(`勝利！對敵造成 ${2 + survivedCount} 點傷害`);
+    } else {
+        // 【修正】戰敗扣血：固定 1 點 + 敵方存活棋子數（上限 5，避免秒殺）
         const survivedCount = game.e.board.filter(c => c && c.hp > 0).length;
-        game.p.hp -= (survivedCount + 2); 
+        const dmg = Math.min(1 + survivedCount, 5);
+        game.p.hp -= dmg;
+        showNotice(`戰敗！損失 ${dmg} 點生命`);
     }
-    showNotice(win ? "勝利！" : "戰敗！");
+
+    // 判斷遊戲是否結束
+    if (game.p.hp <= 0) {
+        showNotice("💀 你已陣亡，遊戲結束！");
+        return;
+    }
+    if (game.e.hp <= 0) {
+        showNotice("🏆 敵方英雄倒下，你贏了！");
+        return;
+    }
     
     setTimeout(startPrepPhase, 2000);
 }
@@ -271,19 +300,30 @@ function startTimer() {
     if (game.timerInterval) clearInterval(game.timerInterval);
     game.timerInterval = setInterval(() => {
         game.timer--;
-        if (game.timer <= 0) startCombatPhase();
         render();
+        // 【Bug 修正】計時器到 0 時也檢查 combatLock，避免雙重觸發
+        if (game.timer <= 0) {
+            clearInterval(game.timerInterval);
+            startCombatPhase();
+        }
     }, 1000);
 }
 
+// 【修正】敵方生成邏輯：回合越高棋子越強，第5回合後混入 TIER_2
 function generateEnemyBoard() {
-    const pool = CARD_DB.TIER_1;
+    const useTier2 = game.round >= 5;
+    const pool = useTier2 ? [...CARD_DB.TIER_1, ...CARD_DB.TIER_2] : CARD_DB.TIER_1;
     const count = Math.min(game.round, 9); // 最多 9 個敵人
     let newBoard = Array(9).fill(null);
     
-    for(let i = 0; i < count; i++) {
-        // 暫時按順序塞入格子，未來可做隨機陣型
-        newBoard[i] = JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)]));
+    // 數值成長：每回合敵人 atk 和 hp 各 +1（模擬難度提升）
+    const bonus = Math.floor(game.round / 2);
+
+    for (let i = 0; i < count; i++) {
+        const card = JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)]));
+        card.atk += bonus;
+        card.hp += bonus;
+        newBoard[i] = card;
     }
     return newBoard;
 }
@@ -343,12 +383,16 @@ async function performAttack(atkBoard, defBoard, attacker, side) {
 function useHeroSkill(idx) {
     if (game.currentHero.id === 'MO_MO' && game.p.gold >= 1) {
         const target = game.p.board[idx];
-        if (target && !target.hasReborn) {
-            game.p.gold -= 1;
-            HERO_EFFECTS['A_HERO_REBORN_ACTIVE'](target);
-            showNotice(`${target.name} 獲得重生！`);
-            render();
+        if (!target) return;
+        // 【修正】已有重生時給予提示，而非靜默失敗
+        if (target.hasReborn) {
+            showNotice(`${target.name} 已有重生標記！`);
+            return;
         }
+        game.p.gold -= 1;
+        HERO_EFFECTS['A_HERO_REBORN_ACTIVE'](target);
+        showNotice(`${target.name} 獲得重生！`);
+        render();
     }
 }
 
